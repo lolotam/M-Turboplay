@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Remove Default Products</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        button { padding: 10px 20px; margin: 10px; font-size: 16px; cursor: pointer; }
+        .success { color: green; }
+        .error { color: red; }
+        .product-list { margin: 20px 0; padding: 10px; background: #f5f5f5; }
+    </style>
+</head>
+<body>
+    <h1>Remove Default Products from LocalStorage</h1>
+
+    <div id="before" class="product-list">
+        <h3>Current Products:</h3>
+        <div id="beforeList"></div>
+    </div>
+
+    <button onclick="removeDefaultProducts()">Remove 6 Default Products (IDs: 1-6)</button>
+    <button onclick="viewProducts()">Refresh Product List</button>
+    <button onclick="clearAllProducts()">Clear ALL Products (Warning!)</button>
+
+    <div id="result"></div>
+
+    <div id="after" class="product-list" style="display:none;">
+        <h3>Products After Removal:</h3>
+        <div id="afterList"></div>
+    </div>
+
+    <script>
+        // Default product IDs to remove (the 6 original products)
+        const DEFAULT_PRODUCT_IDS = ['1', '2', '3', '4', '5', '6'];
+
+        function viewProducts() {
+            const products = localStorage.getItem('admin_products');
+            const beforeList = document.getElementById('beforeList');
+
+            if (products) {
+                const productsArray = JSON.parse(products);
+                beforeList.innerHTML = `
+                    <p><strong>Total: ${productsArray.length} products</strong></p>
+                    <ul>
+                        ${productsArray.map(p => `
+                            <li>
+                                ID: ${p.id} - ${p.titleEn || p.title}
+                                ${DEFAULT_PRODUCT_IDS.includes(p.id) ? '<span style="color: red;">(Default - Will be removed)</span>' : '<span style="color: green;">(Custom - Will keep)</span>'}
+                            </li>
+                        `).join('')}
+                    </ul>
+                `;
+            } else {
+                beforeList.innerHTML = '<p>No products found in localStorage!</p>';
+            }
+        }
+
+        function removeDefaultProducts() {
+            const result = document.getElementById('result');
+            const afterDiv = document.getElementById('after');
+            const afterList = document.getElementById('afterList');
+
+            try {
+                // Get current products
+                const productsJson = localStorage.getItem('admin_products');
+
+                if (!productsJson) {
+                    result.innerHTML = '<p class="error">No products found in localStorage!</p>';
+                    return;
+                }
+
+                const products = JSON.parse(productsJson);
+                const originalCount = products.length;
+
+                // Filter out default products (IDs 1-6)
+                const filteredProducts = products.filter(product =>
+                    !DEFAULT_PRODUCT_IDS.includes(product.id)
+                );
+
+                const removedCount = originalCount - filteredProducts.length;
+
+                // Save filtered products back to localStorage
+                localStorage.setItem('admin_products', JSON.stringify(filteredProducts));
+
+                // Show results
+                result.innerHTML = `
+                    <p class="success">
+                        ✅ Successfully removed ${removedCount} default products!<br>
+                        Kept ${filteredProducts.length} custom products.
+                    </p>
+                `;
+
+                // Show updated list
+                afterDiv.style.display = 'block';
+                afterList.innerHTML = `
+                    <p><strong>Total: ${filteredProducts.length} products</strong></p>
+                    <ul>
+                        ${filteredProducts.map(p => `
+                            <li>ID: ${p.id} - ${p.titleEn || p.title}</li>
+                        `).join('')}
+                    </ul>
+                `;
+
+                // Refresh the before list
+                viewProducts();
+
+            } catch (error) {
+                result.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+            }
+        }
+
+        function clearAllProducts() {
+            if (confirm('⚠️ WARNING: This will delete ALL products including your custom 24 products. Are you sure?')) {
+                localStorage.removeItem('admin_products');
+                document.getElementById('result').innerHTML = '<p class="success">All products cleared!</p>';
+                viewProducts();
+            }
+        }
+
+        // Load products on page load
+        viewProducts();
+    </script>
+</body>
+</html>

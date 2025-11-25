@@ -1,0 +1,306 @@
+{
+  "nav": {
+    "home": "Home",
+    "shop": "Shop",
+    "about": "About",
+    "contact": "Contact",
+    "faq": "FAQ"
+  },
+  "hero": {
+    "title": "Level Up Your Gaming Collection",
+    "subtitle": "Discover premium digital games, in-game items, and exclusive content across all platforms",
+    "description": "Your trusted gaming store for digital games and content",
+    "shopNow": "Browse Games",
+    "howToReceive": "View Categories"
+  },
+  "features": {
+    "securePayment": {
+      "title": "Secure Payment",
+      "description": "Safe & encrypted payment methods"
+    },
+    "trustedGuides": {
+      "title": "Verified Games",
+      "description": "Verified games and digital content"
+    },
+    "fastDelivery": {
+      "title": "Instant Delivery",
+      "description": "Instant digital delivery"
+    }
+  },
+  "products": {
+    "title": "Featured Games",
+    "description": "Discover our handpicked collection of trending games across all genres",
+    "available": "games available",
+    "all": "All Games",
+    "guides": "Digital Games",
+    "physical": "Gaming Accessories",
+    "consultation": "Game Subscriptions",
+    "addToCart": "Add to Cart",
+    "rating": "rating",
+    "save": "Save",
+    "newBadge": "New",
+    "limitedBadge": "Limited",
+    "hotDealBadge": "Hot Deal",
+    "bestSellerBadge": "Best Seller",
+    "showMore": "Show More Games",
+    "category": {
+      "guide": "Digital Games",
+      "physical": "Gaming Accessories",
+      "consultation": "Game Subscriptions"
+    }
+  },
+  "cart": {
+    "title": "Shopping Cart",
+    "itemsInCart": "You have {{count}} item in cart",
+    "itemsInCart_plural": "You have {{count}} items in cart",
+    "empty": "Shopping cart is empty",
+    "quantity": "Quantity:",
+    "unitPrice": "per unit",
+    "promoCode": "Promo Code",
+    "enterPromoCode": "Enter promo code",
+    "apply": "Apply",
+    "orderSummary": "Order Summary",
+    "subtotal": "Subtotal",
+    "shipping": "Shipping",
+    "total": "Total",
+    "free": "Free",
+    "checkout": "Checkout",
+    "continueShopping": "Continue Shopping",
+    "securePayment": "Secure & encrypted payment",
+    "freeShippingDigital": "Free shipping for digital products",
+    "paymentMethods": "Available payment methods:",
+    "currency": "KWD"
+  },
+  "checkout": {
+    "title": "Checkout",
+    "description": "Complete the required information to finalize your order",
+    "steps": {
+      "customerInfo": "Customer Info",
+      "shippingInfo": "Shipping Address",
+      "paymentInfo": "Payment Method",
+      "orderReview": "Order Review",
+      "payment": "Payment"
+    },
+    "customerInfo": {
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email",
+      "phone": "Phone Number",
+      "robloxUsername": "Roblox Username (Optional)"
+    },
+    "shippingInfo": {
+      "address": "Address",
+      "city": "City",
+      "area": "Area",
+      "building": "Building Number (Optional)",
+      "floor": "Floor (Optional)",
+      "apartment": "Apartment Number (Optional)",
+      "notes": "Additional Notes (Optional)"
+    },
+    "paymentMethods": {
+      "knet": "KNET",
+      "visa": "VISA",
+      "mastercard": "Mastercard"
+    },
+    "agreeToTerms": "I agree to the Terms & Conditions",
+    "next": "Next",
+    "previous": "Previous",
+    "confirm": "Confirm Order",
+    "processing": "Processing...",
+    "orderNumber": "Order Number"
+  },
+  "shop": {
+    "title": "Product Store",
+    "description": "Discover our complete collection of guides, physical products, and consultation services",
+    "search": "Search products...",
+    "categories": "Select Category",
+    "priceRange": "Price Range",
+    "allProducts": "All Products",
+    "allPrices": "All Prices",
+    "priceRanges": {
+      "low": "Under 10 KWD",
+      "medium": "10-20 KWD",
+      "high": "Over 20 KWD"
+    },
+    "found": "Found",
+    "filterActive": "Active filter",
+    "noResults": "No products found",
+    "noResultsDesc": "Try changing search terms or filters",
+    "resetSearch": "Reset Search",
+    "loadMore": "Load More Products",
+    "eventBanner": {
+      "title": "🧚‍♀️ Fairy Event Now!",
+      "description": "Get special multipliers and exclusive pets",
+      "moreDetails": "More Details"
+    }
+  },
+  "footer": {
+    "title": "GamingStore",
+    "subtitle": "GamingStore",
+    "description": "Your trusted gaming store for digital games and content across all platforms. Committed to quality gaming experiences.",
+    "quickLinks": "Quick Links",
+    "categories": "Game Categories",
+    "contact": "Contact Us",
+    "location": "Kuwait - Salmiya",
+    "whatsapp": "Contact via WhatsApp",
+    "certified": "Certified & Licensed",
+    "robloxCompliant": "Trusted Gaming Store",
+    "paymentMethods": "Available Payment Methods",
+    "copyright": "© 2025 GamingStore. All rights reserved.",
+    "builtWith": "GamingStore.com - Built with ❤️ in Kuwait",
+    "disclaimer": "Your trusted source for digital gaming content and experiences.",
+    "disclaimerEn": "Your trusted source for digital gaming content and experiences."
+  },
+  "compliance": {
+    "title": "Trusted Gaming Platform",
+    "description": "We are fully committed to providing verified gaming content and maintaining trust with our gaming community across all platforms.",
+    "whatWeDo": "What We Do",
+    "whatWeDoList": [
+      "Sell verified digital games across all platforms",
+      "Provide instant delivery of digital content",
+      "Offer 24/7 customer support",
+      "Curate quality gaming products"
+    ],
+    "whatWeDont": "What We Don't Do",
+    "whatWeDontList": [
+      "Sell unauthorized or illegal content",
+      "Compromise user account security",
+      "Use unethical methods or scams",
+      "Violate platform terms of service"
+    ],
+    "commitment": "Our Commitment to Quality & Trust",
+    "commitmentDesc": "All gaming content provided through our platform is verified and legitimate. We work with trusted publishers and platforms to ensure quality gaming experiences.",
+    "english": "English: We provide verified gaming content across all platforms. All products are legitimate and comply with platform policies."
+  },
+  "contact": {
+    "phone": "+965 55683677",
+    "email": "support@growgardenstore.com"
+  },
+  "messages": {
+    "addedToCart": "Product added to cart!",
+    "addedToCartDesc": "{{productName}} added successfully",
+    "paymentSuccess": "Payment successful!",
+    "paymentSuccessDesc": "You will be redirected to confirmation page",
+    "paymentFailed": "Payment failed",
+    "emptyCart": "Cannot complete order",
+    "emptyCartDesc": "Shopping cart is empty. Add some products first",
+    "noOrderInfo": "No order information",
+    "noOrderInfoDesc": "No order information found"
+  },
+  "paymentSuccess": {
+    "title": "Payment Successful!",
+    "thanks": "Thank you! Your order has been received and will be processed soon",
+    "orderNumber": "Order Number: {{orderNumber}}",
+    "digitalDownloads": "Digital Downloads",
+    "downloadDesc": "You will receive download links via email within minutes",
+    "download": "Download",
+    "nextSteps": "Next Steps",
+    "orderConfirmation": {
+      "title": "Order Confirmation",
+      "desc": "We will contact you within an hour to confirm order details"
+    },
+    "digitalProducts": {
+      "title": "Digital Products",
+      "desc": "You will receive download links via email immediately"
+    },
+    "delivery": {
+      "title": "Delivery",
+      "desc": "Physical products will be delivered within 1-3 business days"
+    },
+    "contactInfo": "Contact Information",
+    "supportNote": "For any inquiries about your order, don't hesitate to contact us",
+    "backToHome": "Back to Home",
+    "continueShopping": "Continue Shopping"
+  },
+  "about": {
+    "title": "About GamingStore",
+    "subtitle": "Your trusted partner for digital gaming",
+    "description": "We are passionate about gaming and dedicated to providing the best digital games, content, and services to help players achieve their gaming goals across all platforms.",
+    "ourMission": "Our Mission",
+    "missionDesc": "To provide high-quality digital gaming content and services that enhance gaming experiences across all platforms while maintaining trust and quality.",
+    "ourValues": "Our Values",
+    "quality": "Quality",
+    "qualityDesc": "We ensure all our games and content meet the highest standards",
+    "safety": "Trust",
+    "safetyDesc": "Verified games and secure platform",
+    "support": "Support",
+    "supportDesc": "Dedicated customer service for all your needs",
+    "experience": "Experience",
+    "experienceDesc": "Years of expertise in digital gaming",
+    "whyChooseUs": "Why Choose Us?",
+    "reasons": [
+      "Extensive collection of games across all platforms",
+      "High-quality digital content with instant delivery",
+      "Fast and reliable service across all regions",
+      "Verified and trusted gaming content",
+      "Dedicated customer support team",
+      "Secure payment processing with multiple options"
+    ]
+  },
+  "contactPage": {
+    "title": "Contact Us",
+    "subtitle": "We're here to help with any questions or concerns",
+    "getInTouch": "Get in Touch",
+    "contactInfo": "Contact Information",
+    "name": "Full Name",
+    "email": "Email Address",
+    "subject": "Subject",
+    "message": "Message",
+    "send": "Send Message",
+    "sending": "Sending...",
+    "messageSent": "Message Sent!",
+    "messageSentDesc": "Thank you for contacting us. We'll get back to you soon.",
+    "messageError": "Failed to send message. Please try again.",
+    "phone": "Phone",
+    "whatsapp": "WhatsApp",
+    "emailAddress": "Email",
+    "location": "Location",
+    "businessHours": "Business Hours",
+    "sunday": "Sunday",
+    "monday": "Monday",
+    "tuesday": "Tuesday",
+    "wednesday": "Wednesday",
+    "thursday": "Thursday",
+    "friday": "Friday",
+    "saturday": "Saturday",
+    "closed": "Closed",
+    "open": "9:00 AM - 10:00 PM"
+  },
+  "deliveryInfo": {
+    "title": "Delivery & Receiving Methods",
+    "subtitle": "Choose the most convenient way to receive your games and digital content",
+    "digital": {
+      "title": "Digital Games",
+      "desc": "Instant delivery via email or account",
+      "time": "Instant"
+    },
+    "physical": {
+      "title": "Gaming Hardware",
+      "desc": "Game hardware and merchandise shipped to your door",
+      "time": "1-3 business days"
+    },
+    "consultation": {
+      "title": "Gift Cards & Codes",
+      "desc": "Redeem immediately across platforms",
+      "time": "Instant"
+    },
+    "processTitle": "Receiving Process",
+    "steps": {
+      "payment": {
+        "title": "Payment",
+        "desc": "Complete secure checkout"
+      },
+      "confirmation": {
+        "title": "Confirmation",
+        "desc": "Receive instant order confirmation"
+      },
+      "delivery": {
+        "title": "Delivery",
+        "desc": "Access your games and content immediately"
+      }
+    },
+    "contactTitle": "Support Information",
+    "location": "Kuwait - Salmiya",
+    "contactDesc": "For inquiries about your order, don't hesitate to contact us"
+  }
+}

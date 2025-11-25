@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # Frontend Application
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: m-turboplay-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - VITE_SUPABASE_PROJECT_ID=${VITE_SUPABASE_PROJECT_ID}
+      - VITE_SUPABASE_PUBLISHABLE_KEY=${VITE_SUPABASE_PUBLISHABLE_KEY}
+      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+      - VITE_STRIPE_PUBLISHABLE_KEY=${VITE_STRIPE_PUBLISHABLE_KEY}
+      - VITE_API_URL=https://m-turboplay.com/api
+      - VITE_SITE_URL=https://m-turboplay.com
+      - VITE_ADMIN_EMAIL=${VITE_ADMIN_EMAIL}
+      - VITE_EMAILJS_SERVICE_ID=${VITE_EMAILJS_SERVICE_ID}
+      - VITE_EMAILJS_TEMPLATE_ID=${VITE_EMAILJS_TEMPLATE_ID}
+      - VITE_EMAILJS_PUBLIC_KEY=${VITE_EMAILJS_PUBLIC_KEY}
+    volumes:
+      - ./dist:/app/dist
+    restart: unless-stopped
+    networks:
+      - m-turboplay-network
+  # Nginx Reverse Proxy with SSL
+  nginx:
+    image: nginx:alpine
+    container_name: m-turboplay-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      - frontend
+    restart: unless-stopped
+    networks:
+      - m-turboplay-network
+
+  # Certbot for SSL certificate management
+  certbot:
+    image: certbot/certbot
+    container_name: m-turboplay-certbot
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt
+      - /var/www/certbot:/var/www/certbot
+    command: certonly --webroot --webroot-path=/var/www/certbot --email admin@m-turboplay.com --agree-tos --no-eff-email -d m-turboplay.com -d www.m-turboplay.com
+    depends_on:
+      - nginx
+
+networks:
+  m-turboplay-network:
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1400
+
+volumes:
+  letsencrypt:
+  certbot:

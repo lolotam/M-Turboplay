@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Check Products in LocalStorage</title>
+</head>
+<body>
+    <h1>Products in LocalStorage</h1>
+    <div id="output"></div>
+    <script>
+        const products = localStorage.getItem('admin_products');
+        const output = document.getElementById('output');
+
+        if (products) {
+            const productsArray = JSON.parse(products);
+            output.innerHTML = `
+                <p><strong>Total Products Found: ${productsArray.length}</strong></p>
+                <h3>Product List:</h3>
+                <ul>
+                    ${productsArray.map(p => `
+                        <li>${p.id} - ${p.titleEn || p.title} - ${p.price} KWD</li>
+                    `).join('')}
+                </ul>
+                <details>
+                    <summary>View Raw JSON</summary>
+                    <pre>${JSON.stringify(productsArray, null, 2)}</pre>
+                </details>
+            `;
+        } else {
+            output.innerHTML = '<p>No products found in localStorage!</p>';
+        }
+
+        // Also check other localStorage keys
+        const allKeys = Object.keys(localStorage);
+        output.innerHTML += `
+            <hr>
+            <h3>All LocalStorage Keys:</h3>
+            <ul>
+                ${allKeys.map(key => `<li>${key} (${localStorage.getItem(key).length} chars)</li>`).join('')}
+            </ul>
+        `;
+    </script>
+</body>
+</html>

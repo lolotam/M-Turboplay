@@ -1,0 +1,148 @@
+{
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ],
+      "env": {
+        "DEFAULT_MINIMUM_TOKENS": ""
+      },
+      "alwaysAllow": [
+        "resolve-library-id",
+        "get-library-docs"
+      ]
+    },
+    "sequentialthinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "alwaysAllow": [
+        "sequentialthinking"
+      ]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@latest"
+      ],
+      "alwaysAllow": [
+        "browser_close",
+        "browser_resize",
+        "browser_console_messages",
+        "browser_handle_dialog",
+        "browser_evaluate",
+        "browser_fill_form",
+        "browser_file_upload",
+        "browser_install",
+        "browser_type",
+        "browser_network_requests",
+        "browser_navigate_back",
+        "browser_take_screenshot",
+        "browser_press_key",
+        "browser_wait_for",
+        "browser_tabs",
+        "browser_snapshot",
+        "browser_drag",
+        "browser_navigate",
+        "browser_click",
+        "browser_hover",
+        "browser_select_option"
+      ]
+    },
+    "exa": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "exa-mcp-server"
+      ],
+      "env": {
+        "EXA_API_KEY": "59ec3d08-bc22-4df6-8b44-54b1a3ba9629"
+      },
+      "alwaysAllow": [
+        "web_search_exa",
+        "company_research_exa",
+        "deep_researcher_check",
+        "crawling_exa",
+        "linkedin_search_exa",
+        "deep_researcher_start"
+      ]
+    },
+    "filesystem-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem"
+      ],
+      "env": {
+        "ALLOWED_DIRECTORIES": "C:\\Users\\HP,C:\\Users\\HP\\.claude,C:\\,E:\\,C:\\Users\\HP\\AppData\\Roaming\\Claude"
+      },
+      "alwaysAllow": [
+        "read_file",
+        "read_text_file",
+        "read_media_file",
+        "read_multiple_files",
+        "write_file",
+        "edit_file",
+        "create_directory",
+        "list_directory",
+        "list_directory_with_sizes",
+        "directory_tree",
+        "move_file",
+        "search_files",
+        "get_file_info",
+        "list_allowed_directories"
+      ]
+    },
+    "ssh-mcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@fangjunjie/ssh-mcp-server",
+        "--host",
+        "49.12.61.66",
+        "--port",
+        "22",
+        "--username",
+        "root",
+        "--password",
+        "@Xx123456789xX@"
+      ],
+      "alwaysAllow": [
+        "execute-command"
+      ]
+    },
+    "perplexity-search": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@smithery/cli@latest",
+        "run",
+        "@arjunkmrm/perplexity-search",
+        "--key",
+        "9099dacd-e8b9-4fe0-9f1b-769da5fa907b",
+        "--profile",
+        "developing-flyingfish-Xu3wIE"
+      ]
+    },
+    "n8n-mcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "n8n-mcp@2.12.2"
+      ],
+      "env": {
+        "MCP_MODE": "stdio",
+        "LOG_LEVEL": "error",
+        "DISABLE_CONSOLE_OUTPUT": "true",
+        "N8N_API_URL": "https://n8n-waleed.shop",
+        "N8N_API_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMzg5ZmVhYS1iYTY1LTQzMzQtYjA3NS1lZDdlYThjYjA0NjYiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzYwOTk4NjM3fQ.H-jaLNk6pSKZt4eDnW5koTzbsKMoxH7MQbTBhLhedjY"
+      }
+    }
+  }
+}

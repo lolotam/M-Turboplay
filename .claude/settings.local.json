@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__thinking-mcp__sequentialthinking",
+      "Bash(node:*)",
+      "Bash(pip install:*)",
+      "Bash(python:*)",
+      "Bash(npm run dev:*)",
+      "Bash(taskkill:*)",
+      "mcp__MCP_DOCKER__sequentialthinking",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(timeout:*)",
+      "mcp__MCP_DOCKER__browser_navigate",
+      "Bash(powershell:*)",
+      "mcp__MCP_DOCKER__browser_install",
+      "mcp__MCP_DOCKER__resolve-library-id",
+      "mcp__MCP_DOCKER__puppeteer_navigate",
+      "Bash(dir:*)",
+      "Read(//c/Users/Administrator/AppData/Roaming/Claude/**)",
+      "Read(//c/Users/Administrator/Pictures/Screenshots/**)",
+      "Bash(npx n8n-mcp:*)",
+      "Bash(npm info:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(npm config:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: add comprehensive admin features with AI integration and UI improvements\n\nMajor changes:\n- Add AI Chat admin page with natural language query support\n- Implement discount codes management system with context\n- Enhance admin dashboard with improved analytics and navigation\n- Add settings management context with export/import functionality\n- Create AI utilities for data analysis, query parsing, and response generation\n- Add CSV export functionality for admin data\n- Update admin navigation header with improved UX\n- Add MCP server configuration for agent integration\n- Include favicon variations and branding assets\n- Remove deprecated server directory\n- Update dependencies and configurations\n\nTechnical improvements:\n- Add DiscountCodesContext and SettingsContext for state management\n- Implement AI-powered data analytics with multiple LLM providers\n- Add comprehensive admin settings with theme and notification controls\n- Improve routing with lazy loading for admin components\n- Update production environment configuration\n- Add GitHub Copilot and Trae agent instructions\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push:*)"
+    ],
+    "deny": [],
+    "ask": []
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "MCP_DOCKER"
+  ]
+}

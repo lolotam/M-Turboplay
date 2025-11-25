@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  growagarden:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: GrowAgarden
+    image: growagarden:latest
+    ports:
+      - "8081:8081"
+    environment:
+      - NODE_ENV=production
+      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+      - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - growagarden-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  growagarden-network:
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1400
