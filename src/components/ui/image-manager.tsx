@@ -47,6 +47,11 @@ export const ImageManager: React.FC<ImageManagerProps> = ({
     isMain: index === 0
   }));
 
+  // Debug log to track state changes
+  useEffect(() => {
+    console.log('ImageManager - images updated:', images.length, images);
+  }, [images]);
+
   // Disabled auto-scroll functionality - images stay static
   // useEffect(() => {
   //   if (images.length <= 1 || isAutoScrollPaused) {
@@ -72,7 +77,7 @@ export const ImageManager: React.FC<ImageManagerProps> = ({
   const handleAddUrlImage = () => {
     const trimmedUrl = newImageUrl.trim();
     if (!trimmedUrl) {
-      setUploadError("Please enter an image URL");
+      setUploadError("يرجى إدخال رابط الصورة");
       return;
     }
 
@@ -84,7 +89,7 @@ export const ImageManager: React.FC<ImageManagerProps> = ({
     const isHttpUrl = trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://');
 
     if (!isDataUrl && !isHttpUrl) {
-      setUploadError("Please enter a valid image URL (http://, https://, or data:image/)");
+      setUploadError("يرجى إدخال رابط صورة صحيح (http://, https://, أو data:image/)");
       return;
     }
 
@@ -93,18 +98,18 @@ export const ImageManager: React.FC<ImageManagerProps> = ({
       try {
         new URL(trimmedUrl);
       } catch {
-        setUploadError("Please enter a valid HTTP/HTTPS URL");
+        setUploadError("يرجى إدخال رابط HTTP/HTTPS صحيح");
         return;
       }
     }
 
     if (images.includes(trimmedUrl)) {
-      setUploadError("This image URL already exists");
+      setUploadError("رابط الصورة هذا موجود بالفعل");
       return;
     }
 
     if (images.length >= maxImages) {
-      setUploadError(`Maximum ${maxImages} images allowed`);
+      setUploadError(`الحد الأقصى هو ${maxImages} صور`);
       return;
     }
 
@@ -128,8 +133,8 @@ export const ImageManager: React.FC<ImageManagerProps> = ({
 
       if (images.length + newImageUrls.length > maxImages) {
         toast({
-          title: "Error",
-          description: `Maximum ${maxImages} images allowed`,
+          title: "خطأ",
+          description: `الحد الأقصى هو ${maxImages} صور`,
           variant: "destructive",
         });
         return;
@@ -139,23 +144,23 @@ export const ImageManager: React.FC<ImageManagerProps> = ({
       onImagesChange(newImages);
 
       toast({
-        title: "Success",
-        description: `${files.length} image(s) uploaded successfully`,
+        title: "نجاح",
+        description: `تم رفع ${files.length} صور(ة) بنجاح`,
       });
 
       // Show helpful tip for data URL limit
       const totalDataUrls = newImages.filter(url => url.startsWith('data:')).length;
       if (totalDataUrls >= 3) {
         toast({
-          title: "💡 Tip: More Images Available",
-          description: "You've uploaded 3 images. For additional images, use the 'Add URL' tab with web-hosted image URLs to add up to 10 total images.",
+          title: "💡 نصيحة: المزيد من الصور متاحة",
+          description: "لقد رفعت 3 صور. لإضافة المزيد من الصور، استخدم تبويب 'إضافة رابط' مع روابط الصور المستضافة على الويب لإضافة ما يصل إلى 10 صور إجمالية.",
           variant: "default",
         });
       }
     } catch (error) {
       toast({
-        title: "Error",
-        description: `Failed to upload images: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        title: "خطأ",
+        description: `فشل في رفع الصور: ${error instanceof Error ? error.message : 'خطأ غير معروف'}`,
         variant: "destructive",
       });
     }
@@ -169,8 +174,8 @@ export const ImageManager: React.FC<ImageManagerProps> = ({
   const handleCropComplete = (croppedImageUrl: string) => {
     if (images.length >= maxImages) {
       toast({
-        title: "Error",
-        description: `Maximum ${maxImages} images allowed`,
+        title: "خطأ",
+        description: `الحد الأقصى هو ${maxImages} صور`,
         variant: "destructive",
       });
       return;
@@ -180,8 +185,8 @@ export const ImageManager: React.FC<ImageManagerProps> = ({
     onImagesChange(newImages);
 
     toast({
-      title: "Success",
-      description: "Image cropped and added successfully",
+      title: "نجاح",
+      description: "تم قص الصورة وإضافتها بنجاح",
     });
   };
 
@@ -209,11 +214,13 @@ export const ImageManager: React.FC<ImageManagerProps> = ({
     // Set loading state
     setIsDeleting(index);
 
-    // Simulate async operation for better UX
-    await new Promise(resolve => setTimeout(resolve, 300));
-
     try {
+      // Simulate async operation for better UX
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
       const newImages = images.filter((_, i) => i !== index);
+      
+      // Call the callback to update parent component state
       onImagesChange(newImages);
 
       toast({
@@ -229,6 +236,7 @@ export const ImageManager: React.FC<ImageManagerProps> = ({
         variant: "destructive",
       });
     } finally {
+      // Clear the deleting state
       setIsDeleting(null);
     }
   };
@@ -238,6 +246,11 @@ export const ImageManager: React.FC<ImageManagerProps> = ({
     const imageToMove = newImages.splice(index, 1)[0];
     newImages.unshift(imageToMove);
     onImagesChange(newImages);
+    
+    toast({
+      title: "نجاح",
+      description: "تم تعيين الصورة كصورة رئيسية بنجاح",
+    });
   };
 
   const handleImageUrlKeyPress = (e: React.KeyboardEvent) => {

@@ -1,5 +1,5 @@
-import { supabase } from '@/lib/supabase';
-import { Product } from '@/contexts/ProductsContext';
+import { supabase } from '@/integrations/supabase/client';
+import { Product } from '@/types/database';
 
 // Ensure Supabase is available
 if (!supabase) {

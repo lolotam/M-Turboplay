@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useProducts } from '@/contexts/ProductsContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -62,8 +62,16 @@ const AdminProducts = () => {
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const [isDeletingBulk, setIsDeletingBulk] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
 
   const filteredProducts = searchProducts(searchQuery, selectedCategory);
+
+  // Ensure button is properly initialized and visible
+  useEffect(() => {
+    console.log('=== COMPONENT MOUNTED ===');
+    console.log('isSelectionMode:', isSelectionMode);
+    console.log('Button should be:', !isSelectionMode ? 'VISIBLE' : 'HIDDEN');
+  }, [isSelectionMode]);
 
   const handleDeleteProduct = async (product: Product) => {
     setDeletingId(product.id);
@@ -122,8 +130,8 @@ const AdminProducts = () => {
       if (successCount > 0) {
         toast({
           title: isRTL ? 'تم حذف المنتجات' : 'Products Deleted',
-          description: isRTL ? 
-            `تم حذف ${successCount} منتج بنجاح` : 
+          description: isRTL ?
+            `تم حذف ${successCount} منتج بنجاح` :
             `${successCount} products deleted successfully`,
         });
         setSelectedProducts(new Set());
@@ -132,8 +140,8 @@ const AdminProducts = () => {
       if (failedCount > 0) {
         toast({
           title: isRTL ? 'تحذير' : 'Warning',
-          description: isRTL ? 
-            `فشل حذف ${failedCount} منتج` : 
+          description: isRTL ?
+            `فشل حذف ${failedCount} منتج` :
             `Failed to delete ${failedCount} products`,
           variant: 'destructive',
         });
@@ -147,7 +155,27 @@ const AdminProducts = () => {
     } finally {
       setIsDeletingBulk(false);
       setShowBulkDeleteDialog(false);
+      setIsSelectionMode(false);
     }
+  };
+
+  const toggleSelectionMode = () => {
+    console.log('=== TOGGLE SELECTION MODE ===');
+    console.log('Current isSelectionMode:', isSelectionMode);
+    console.log('New state will be:', !isSelectionMode);
+    console.log('Selected products count:', selectedProducts.size);
+    
+    setIsSelectionMode(!isSelectionMode);
+    if (isSelectionMode) {
+      console.log('Clearing selected products...');
+      setSelectedProducts(new Set());
+    }
+    
+    // Force re-render
+    setTimeout(() => {
+      console.log('=== STATE UPDATE COMPLETE ===');
+      console.log('New isSelectionMode:', !isSelectionMode);
+    }, 0);
   };
 
   // CSV Template Download Function
@@ -395,30 +423,113 @@ const AdminProducts = () => {
       {/* Page Header */}
       <div className="border-b border-border bg-card/50">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gradient flex items-center gap-2">
-                <Package className="w-6 h-6" />
-                {isRTL ? 'إدارة المنتجات' : 'Products Management'}
-              </h1>
-              <p className="text-muted-foreground">
-                {isRTL ? 'إدارة جميع منتجات المتجر' : 'Manage all store products'}
-              </p>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              {selectedProducts.size > 0 && (
+          {/* Title Section */}
+          <div className="mb-4">
+            <h1 className="text-2xl font-bold text-gradient flex items-center gap-2 mb-2">
+              <Package className="w-6 h-6" />
+              {isRTL ? 'إدارة المنتجات' : 'Products Management'}
+            </h1>
+            <p className="text-muted-foreground">
+              {isRTL ? 'إدارة جميع منتجات المتجر' : 'Manage all store products'}
+            </p>
+          </div>
+
+          {/* Actions Section - Separate container for better layout control */}
+          <div className="w-full">
+            {/* Debug Info - Remove in production */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="mb-3 p-2 bg-yellow-100 border border-yellow-300 rounded text-sm">
+                <strong>Debug Info:</strong> isSelectionMode: {isSelectionMode ? 'true' : 'false'},
+                Selected: {selectedProducts.size},
+                Button should be: {!isSelectionMode ? 'VISIBLE' : 'HIDDEN'}
+              </div>
+            )}
+
+            {/* Delete Products Button - Always visible when not in selection mode */}
+            <div className="mb-3 border-2 border-dashed border-red-300 p-3 rounded-lg bg-red-50">
+              <div className="text-center mb-2">
+                <span className="text-sm text-red-600 font-medium">
+                  {isRTL ? 'منطقة زر الحذف' : 'Delete Button Area'}
+                </span>
+              </div>
+              {!isSelectionMode && (
                 <Button
                   variant="destructive"
-                  onClick={() => setShowBulkDeleteDialog(true)}
-                  className="flex items-center gap-2"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    console.log('Delete Products button clicked!');
+                    toggleSelectionMode();
+                  }}
+                  className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-medium px-6 py-3 shadow-lg border-2 border-red-800 transition-all duration-200 min-h-12 text-lg"
+                  style={{
+                    minWidth: '220px',
+                    zIndex: 1000,
+                    position: 'relative',
+                    display: 'inline-flex',
+                    fontSize: '16px',
+                    fontWeight: 'bold'
+                  }}
+                  aria-label={isRTL ? 'حذف المنتجات' : 'Delete Products'}
+                  data-testid="delete-products-button"
+                  id="delete-products-main-button"
                 >
-                  <Trash2 className="w-4 h-4" />
-                  {isRTL ? `حذف (${selectedProducts.size})` : `Delete (${selectedProducts.size})`}
+                  <Trash2 className="w-6 h-6 flex-shrink-0" />
+                  <span className="font-bold">
+                    {isRTL ? '🗑️ حذف المنتجات' : '🗑️ Delete Products'}
+                  </span>
                 </Button>
               )}
+              {isSelectionMode && (
+                <div className="text-center">
+                  <Button
+                    variant="outline"
+                    onClick={toggleSelectionMode}
+                    className="flex items-center gap-2 px-4 py-2"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    {isRTL ? 'إلغاء وضع الاختيار' : 'Exit Selection Mode'}
+                  </Button>
+                </div>
+              )}
+            </div>
 
-              {/* CSV Import/Export Section */}
+            {/* Selection Mode Controls */}
+            {isSelectionMode && (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-blue-800 font-medium">
+                    {isRTL ? 'وضع الاختيار مفعل' : 'Selection Mode Active'}
+                  </span>
+                  <Badge variant="secondary">
+                    {selectedProducts.size} {isRTL ? 'محدد' : 'selected'}
+                  </Badge>
+                </div>
+                
+                <div className="flex flex-col sm:flex-row gap-2">
+                  {selectedProducts.size > 0 && (
+                    <Button
+                      variant="destructive"
+                      onClick={() => setShowBulkDeleteDialog(true)}
+                      className="flex items-center gap-2 px-4 py-2"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      {isRTL ? `حذف المحدد (${selectedProducts.size})` : `Delete Selected (${selectedProducts.size})`}
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    onClick={toggleSelectionMode}
+                    className="flex items-center gap-2 px-4 py-2"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    {isRTL ? 'رجوع' : 'Back'}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* CSV Import/Export Section */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
@@ -560,13 +671,15 @@ const AdminProducts = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-16 text-center">#</TableHead>
-                    <TableHead className="w-12 text-center">
-                      <Checkbox
-                        checked={filteredProducts.length > 0 && filteredProducts.every(p => selectedProducts.has(p.id))}
-                        onCheckedChange={handleSelectAll}
-                        aria-label={isRTL ? 'تحديد الكل' : 'Select all'}
-                      />
-                    </TableHead>
+                    {isSelectionMode && (
+                      <TableHead className="w-12 text-center">
+                        <Checkbox
+                          checked={filteredProducts.length > 0 && filteredProducts.every(p => selectedProducts.has(p.id))}
+                          onCheckedChange={handleSelectAll}
+                          aria-label={isRTL ? 'تحديد الكل' : 'Select all'}
+                        />
+                      </TableHead>
+                    )}
                     <TableHead className="text-left">{isRTL ? 'المنتج' : 'Product'}</TableHead>
                     <TableHead className="text-center">{isRTL ? 'الفئة' : 'Category'}</TableHead>
                     <TableHead className="text-center">{isRTL ? 'السعر' : 'Price'}</TableHead>
@@ -581,13 +694,15 @@ const AdminProducts = () => {
                       <TableCell className="text-center font-medium text-muted-foreground">
                         {index + 1}
                       </TableCell>
-                      <TableCell className="text-center">
-                        <Checkbox
-                          checked={selectedProducts.has(product.id)}
-                          onCheckedChange={(checked) => handleSelectProduct(product.id, checked as boolean)}
-                          aria-label={isRTL ? `تحديد ${product.title}` : `Select ${product.titleEn}`}
-                        />
-                      </TableCell>
+                      {isSelectionMode && (
+                        <TableCell className="text-center">
+                          <Checkbox
+                            checked={selectedProducts.has(product.id)}
+                            onCheckedChange={(checked) => handleSelectProduct(product.id, checked as boolean)}
+                            aria-label={isRTL ? `تحديد ${product.title}` : `Select ${product.titleEn}`}
+                          />
+                        </TableCell>
+                      )}
                       <TableCell className="text-left">
                         <div className="flex items-center gap-3">
                           <div className="relative">

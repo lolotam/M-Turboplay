@@ -16,22 +16,82 @@ const AuthCallback: React.FC = () => {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        const code = searchParams.get('code');
-        const error = searchParams.get('error');
-        const errorDescription = searchParams.get('error_description');
+        // First check hash parameters (Supabase OAuth standard)
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+        const error = hashParams.get('error');
+        const errorDescription = hashParams.get('error_description');
 
-        if (error) {
-          console.error('OAuth error:', error, errorDescription);
+        // Also check query parameters as fallback
+        const queryCode = searchParams.get('code');
+        const queryError = searchParams.get('error');
+        const queryErrorDescription = searchParams.get('error_description');
+
+        if (error || queryError) {
+          console.error('OAuth error:', error || queryError, errorDescription || queryErrorDescription);
           setStatus('error');
-          setErrorMessage(errorDescription || error);
+          setErrorMessage((errorDescription || queryErrorDescription) || (error || queryError));
           return;
         }
 
-        if (code) {
-          console.log('Processing OAuth callback with code:', code);
+        // If we have tokens in hash, Supabase should auto-handle them
+        if (accessToken) {
+          console.log('Found access token in hash, waiting for Supabase to process...');
           
-          // Exchange the code for a session
-          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          // Improved session polling with timeout
+          const waitForSession = async (maxAttempts = 10, interval = 500): Promise<{ session: any; error: any }> => {
+            for (let i = 0; i < maxAttempts; i++) {
+              const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+              
+              if (session) {
+                return { session, error: null };
+              }
+              
+              if (sessionError) {
+                return { session: null, error: sessionError };
+              }
+              
+              await new Promise(resolve => setTimeout(resolve, interval));
+            }
+            return { session: null, error: new Error('Session timeout after multiple attempts') };
+          };
+
+          const { session, error: sessionError } = await waitForSession();
+            
+          if (sessionError) {
+            console.error('Error getting session:', sessionError);
+            setStatus('error');
+            setErrorMessage(sessionError.message);
+            return;
+          }
+
+          if (session && session.user) {
+            console.log('Authentication successful via hash:', session.user.email);
+            setStatus('success');
+            
+            // Refresh auth context
+            await checkAuth();
+            
+            // Redirect to admin dashboard if admin, otherwise to home
+            const isAdmin = session.user.email === 'mwaleedtam2016@gmail.com' || session.user.email === 'admin@growgardenstore.com';
+            const redirectTo = isAdmin ? '/admin/dashboard' : '/';
+            
+            setTimeout(() => {
+              navigate(redirectTo, { replace: true });
+            }, 2000);
+          } else {
+            setStatus('error');
+            setErrorMessage('Session creation failed - please try again');
+          }
+        }
+        
+        // Fallback to code exchange if no hash tokens but we have a code
+        else if (queryCode) {
+          console.log('Processing OAuth callback with code:', queryCode);
+          
+          // Exchange code for a session
+          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(queryCode);
           
           if (exchangeError) {
             console.error('Error exchanging code for session:', exchangeError);
@@ -41,14 +101,14 @@ const AuthCallback: React.FC = () => {
           }
 
           if (data.session && data.user) {
-            console.log('Authentication successful:', data.user.email);
+            console.log('Authentication successful via code exchange:', data.user.email);
             setStatus('success');
             
             // Refresh auth context
             await checkAuth();
             
             // Redirect to admin dashboard if admin, otherwise to home
-            const isAdmin = data.user.email === 'admin@growgardenstore.com';
+            const isAdmin = data.user.email === 'mwaleedtam2016@gmail.com' || data.user.email === 'admin@growgardenstore.com';
             const redirectTo = isAdmin ? '/admin/dashboard' : '/';
             
             setTimeout(() => {
@@ -60,7 +120,7 @@ const AuthCallback: React.FC = () => {
           }
         } else {
           setStatus('error');
-          setErrorMessage('No authorization code received');
+          setErrorMessage('No authorization code or access token received');
         }
       } catch (error) {
         console.error('Auth callback error:', error);
