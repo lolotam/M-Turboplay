@@ -59,7 +59,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Simulated admin credentials - in production, this would be handled by a backend API
   const ADMIN_CREDENTIALS = {
     email: 'mwaleedtam2016@gmail.com',
-    password: '@Xx123456789xX@',
+    password: '454545',
     user: {
       id: 'admin-1',
       email: 'mwaleedtam2016@gmail.com',
