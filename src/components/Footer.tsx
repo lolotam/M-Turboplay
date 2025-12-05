@@ -41,6 +41,67 @@ const Footer = () => {
       </div>
 
       <div className="container mx-auto px-4 py-16 relative z-10">
+        {/* Customer Reviews Strip */}
+        <div className="mb-12">
+          <div className="bg-gradient-to-r from-[#1A1A2E]/80 to-[#0F0A1F]/80 border border-[#A855F7]/30 rounded-2xl p-8">
+            <h3 className="text-2xl font-bold text-white mb-6 text-center" style={{ fontFamily: 'Tajawal, Cairo, sans-serif' }}>
+              {isRTL ? 'آراء العملاء' : 'Customer Reviews'}
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[1, 2, 3].map((review) => (
+                <div key={review} className="text-center">
+                  <div className="flex justify-center mb-3">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`w-5 h-5 ${i < 4 ? 'text-[#FFD700]' : 'text-[#C4B5FD]'}`}
+                        fill={i < 4}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-white font-semibold mb-2">
+                    {isRTL ? `عميل ${review}` : `Customer ${review}`}
+                  </p>
+                  <p className="text-[#C4B5FD] text-sm italic">
+                    {isRTL
+                      ? 'خدمة ممتازة ومنتجات عالية الجودة. أوصي بالمتجر بشدة!'
+                      : 'Excellent service and high-quality products. Highly recommended!'}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* App Download Section */}
+        <div className="mb-12">
+          <div className="bg-gradient-to-r from-[#A855F7]/20 to-[#E935C1]/20 border border-[#A855F7]/30 rounded-2xl p-8">
+            <h3 className="text-2xl font-bold text-white mb-6 text-center" style={{ fontFamily: 'Tajawal, Cairo, sans-serif' }}>
+              {isRTL ? 'حمل التطبيق' : 'Download Our App'}
+            </h3>
+            <p className="text-[#C4B5FD] text-center mb-8">
+              {isRTL
+                ? 'احصل على أفضل تجربة تسوق مع تطبيقنا المميز. متوفر لأندرويد و iOS'
+                : 'Get the best shopping experience with our amazing app. Available for Android and iOS'}
+              }
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Button className="bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-xl flex items-center gap-3 transition-all duration-300 hover:scale-105">
+                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.519 8.018c-.356-.008-.672-.03-.984-.018l-2.496 2.496c-.313.313-.613.613-.925.925-.011-.312-.011-.625 0-.938l-2.496-2.496c-.313-.313-.613-.613-.925-.925-.011.313-.011.625 0 .938l2.496 2.496c.313.313.613.613.925.925.011.312.011.625 0 .938l2.496-2.496c.313-.313.613-.613.925-.925.011-.312.011-.625 0-.938l-2.496-2.496c-.313-.313-.613-.613-.925-.925-.011.313-.011.625 0 .938l2.496 2.496c.313.313.613.613.925.925.011.312.011.625 0 .938z"/>
+                </svg>
+                <span>{isRTL ? 'متجر جوجل بلاي' : 'Google Play Store'}</span>
+              </Button>
+              <Button className="bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-xl flex items-center gap-3 transition-all duration-300 hover:scale-105">
+                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.71 19.5c-.83 1.24-1.71 1.24-.96 0-.57-.35-1.08-.88-1.71-.25.61-.47-1.29-.47-1.71 0-1.06.58-1.71 1.24-1.71 1.24.45.79.75 1.71 1.24.96 0 .57.35 1.08.88 1.71.25.61.47 1.29.47 1.71 0 1.06-.58 1.71-1.24.96-.83-.83-1.24-1.71-1.24-.96 0-.57-.35-1.08-.88-1.71-.25-.61-.47-1.29-.47-1.71 0-1.06.58-1.71 1.24-1.71 1.24-.45-.79-.75-1.71-1.24-.96 0-.57-.35-1.08-.88-1.71-.25-.61-.47-1.29-.47-1.71 0z"/>
+                </svg>
+                <span>{isRTL ? 'متجر آب ستور' : 'App Store'}</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+
         {/* Main Footer Content - 4 Columns */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
 

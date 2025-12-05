@@ -79,6 +79,11 @@ export default {
 				'card': 'var(--shadow-card)',
 				'purple-glow': 'var(--shadow-purple-glow)',
 				'green-glow': 'var(--shadow-green-glow)',
+				'gaming-card': '0 8px 32px rgba(247, 37, 133, 0.3)',
+				'neon-pink': '0 0 20px rgba(247, 37, 133, 0.6)',
+				'neon-blue': '0 0 20px rgba(76, 201, 240, 0.6)',
+				'neon-green': '0 0 20px rgba(16, 185, 129, 0.6)',
+				'cyber-grid': 'inset 0 0 0 0.5px rgba(247, 37, 133, 0.3)',
 			},
 			backgroundImage: {
 				'gradient-primary': 'var(--gradient-primary)',

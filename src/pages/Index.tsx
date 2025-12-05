@@ -1,16 +1,10 @@
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
-import SecondaryPromotionalBanner from "@/components/SecondaryPromotionalBanner";
-import GameCategories from "@/components/GameCategories";
-import ProductCarousel from "@/components/ProductCarousel";
-import ProductGridEnhanced from "@/components/ProductGridEnhanced";
-import DynamicSectionsManager from "@/components/DynamicSectionsManager";
-import FeaturedBrands from "@/components/FeaturedBrands";
-import PlatformSections from "@/components/PlatformSections";
-import CommunityContent from "@/components/CommunityContent";
-import DeliveryInfo from "@/components/DeliveryInfo";
-import CustomerTestimonials from "@/components/CustomerTestimonials";
-import NewsletterSignup from "@/components/NewsletterSignup";
+import MainCategories from "@/components/MainCategories";
+import DigitalProducts from "@/components/DigitalProducts";
+import RankBoosting from "@/components/RankBoosting";
+import RobloxSection from "@/components/RobloxSection";
+import RocketLeagueSection from "@/components/RocketLeagueSection";
 import Footer from "@/components/Footer";
 import { useProducts } from "@/contexts/ProductsContext";
 import { useTranslation } from 'react-i18next';
@@ -64,69 +58,26 @@ const Index = () => {
   }));
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-[#0F0A1F] via-[#1A1A2E] to-[#0F0A1F]">
       <Header />
       <main>
-        {/* 1. Hero Banner Section */}
+        {/* 1. Hero Section */}
         <HeroSection />
 
-        {/* 2. Secondary Promotional Banner */}
-        <SecondaryPromotionalBanner />
+        {/* 2. Main Categories */}
+        <MainCategories />
 
-        {/* 3. Shop by Categories */}
-        <GameCategories />
+        {/* 3. Digital Products */}
+        <DigitalProducts />
 
-        {/* 4. Product Carousels */}
-        <ProductCarousel
-          title="جديد في الألعاب"
-          titleEn="New in Gaming"
-          products={newGames}
-          badge={isRTL ? "جديد" : "New"}
-          badgeColor="bg-[#10B981]"
-          viewAllLink="/new-releases"
-        />
+        {/* 4. Rank Boosting Section */}
+        <RankBoosting />
 
-        <ProductCarousel
-          title="الأكثر مبيعاً"
-          titleEn="Best Sellers"
-          products={bestSellers}
-          badge={isRTL ? "الأكثر شعبية" : "Most Popular"}
-          badgeColor="bg-[#F59E0B]"
-          viewAllLink="/best-sellers"
-        />
+        {/* 5. Roblox Section */}
+        <RobloxSection />
 
-        <ProductCarousel
-          title="عروض خاصة"
-          titleEn="Special Offers"
-          products={specialOffers}
-          badge={isRTL ? "خصومات" : "Sale"}
-          badgeColor="bg-[#E935C1]"
-          viewAllLink="/deals"
-        />
-
-        {/* 5. Enhanced Products Grid */}
-        <ProductGridEnhanced />
-
-        {/* 6. Dynamic Sections Management */}
-        <DynamicSectionsManager />
-
-        {/* 7. Featured Brands Section */}
-        <FeaturedBrands />
-
-        {/* 7. Platform-Specific Sections */}
-        <PlatformSections />
-
-        {/* 8. Community & Content Section */}
-        <CommunityContent />
-
-        {/* 9. Enhanced Payment & Delivery Info */}
-        <DeliveryInfo />
-
-        {/* 10. Customer Reviews/Testimonials */}
-        <CustomerTestimonials />
-
-        {/* 11. Newsletter Signup */}
-        <NewsletterSignup />
+        {/* 6. Rocket League Section */}
+        <RocketLeagueSection />
       </main>
       <Footer />
     </div>
