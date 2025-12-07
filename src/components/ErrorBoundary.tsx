@@ -68,16 +68,31 @@ class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="min-h-screen flex items-center justify-center bg-background p-4" role="alert" aria-live="polite">
           <div className="max-w-md w-full space-y-6">
             <div className="text-center">
-              <AlertTriangle className="w-16 h-16 text-destructive mx-auto mb-4" />
+              <AlertTriangle className="w-16 h-16 text-destructive mx-auto mb-4" aria-hidden="true" />
               <h1 className="text-2xl font-bold text-foreground mb-2">
                 حدث خطأ غير متوقع
               </h1>
               <p className="text-muted-foreground mb-6">
                 نعتذر، لقد حدث خطأ في التطبيق. يرجى المحاولة مرة أخرى.
               </p>
+              {/* Add helpful suggestions based on error type */}
+              {this.state.error?.name === 'ChunkLoadError' && (
+                <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                    💡 This might be a network issue. Please check your internet connection and try refreshing the page.
+                  </p>
+                </div>
+              )}
+              {this.state.error?.message?.includes('Network') && (
+                <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                    🌐 Network connection issue. Please check your internet connection and try again.
+                  </p>
+                </div>
+              )}
             </div>
 
             {this.props.showDetails && this.state.error && (

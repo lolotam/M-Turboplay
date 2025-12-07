@@ -61,7 +61,7 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-b from-[#0F0A1F] via-[#1A1A2E] to-[#0F0A1F]">
       <Header />
       <main>
-        {/* 1. Hero Section */}
+        {/* 1. Hero Section with Auto-Sliding Carousel */}
         <HeroSection />
 
         {/* 2. Main Categories */}

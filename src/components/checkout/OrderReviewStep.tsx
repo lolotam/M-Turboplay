@@ -7,7 +7,7 @@ import {
   CheckCircle, 
   User, 
   MapPin, 
-  CreditCard, 
+
   Package,
   Clock,
   Phone,
@@ -50,19 +50,12 @@ interface OrderReviewStepProps {
 const OrderReviewStep = ({
   customerData,
   shippingData,
-  paymentData,
   onPrev,
   onConfirm,
   isLoading = false
 }: OrderReviewStepProps) => {
   const { state } = useCart();
 
-  const getPaymentMethodName = (method: string) => {
-    switch (method) {
-      case "stripe": return "جميع البطاقات الدولية";
-      default: return method;
-    }
-  };
 
   const hasPhysicalItems = state.items.some(item => !item.isDigital);
 
@@ -222,27 +215,7 @@ const OrderReviewStep = ({
         </Card>
       )}
 
-      {/* Payment Information */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CreditCard className="w-5 h-5 text-primary" />
-            طريقة الدفع
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {paymentData && (
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-8 bg-indigo-600 rounded flex items-center justify-center text-white font-bold text-xs">
-                💳
-              </div>
-              <span className="text-sm font-medium">
-                {getPaymentMethodName(paymentData.paymentMethod)}
-              </span>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+
 
       {/* Delivery Timeline */}
       <Card>

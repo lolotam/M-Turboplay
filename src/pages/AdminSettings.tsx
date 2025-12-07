@@ -20,9 +20,11 @@ import {
   Loader2,
   AlertTriangle,
   ExternalLink,
+  RefreshCw,
 } from 'lucide-react';
 import AdminNavHeader from '@/components/admin/AdminNavHeader';
 import { useSettings, LLMProvider, AVAILABLE_MODELS } from '@/contexts/SettingsContext';
+import { fetchOpenRouterModels } from '@/services/openrouter';
 
 const AdminSettings: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -35,6 +37,7 @@ const AdminSettings: React.FC = () => {
     openai: false,
     claude: false,
     perplexity: false,
+    openrouter: false,
     local: false,
   });
   const [testingProvider, setTestingProvider] = useState<LLMProvider | null>(null);
@@ -42,8 +45,11 @@ const AdminSettings: React.FC = () => {
     openai: { tested: false, success: false, message: '' },
     claude: { tested: false, success: false, message: '' },
     perplexity: { tested: false, success: false, message: '' },
+    openrouter: { tested: false, success: false, message: '' },
     local: { tested: true, success: true, message: 'Local AI is always available' },
   });
+  const [openRouterModels, setOpenRouterModels] = useState<{ value: string, label: string }[]>([]);
+  const [fetchingModels, setFetchingModels] = useState(false);
 
   const handleSaveSettings = () => {
     saveSettings();
@@ -83,6 +89,30 @@ const AdminSettings: React.FC = () => {
       description: result.message,
       variant: result.success ? 'default' : 'destructive',
     });
+  };
+
+  const handleFetchModels = async () => {
+    setFetchingModels(true);
+    try {
+      const models = await fetchOpenRouterModels();
+      const formattedModels = models.map(m => ({
+        value: m.id,
+        label: m.name
+      }));
+      setOpenRouterModels(formattedModels);
+      toast({
+        title: isRTL ? '✅ تم تحديث النماذج' : '✅ Models Updated',
+        description: isRTL ? `تم جلب ${models.length} نموذج` : `Fetched ${models.length} models from OpenRouter`,
+      });
+    } catch (error) {
+      toast({
+        title: isRTL ? 'خطأ' : 'Error',
+        description: isRTL ? 'فشل في جلب النماذج' : 'Failed to fetch models',
+        variant: 'destructive',
+      });
+    } finally {
+      setFetchingModels(false);
+    }
   };
 
   const toggleApiKeyVisibility = (provider: LLMProvider) => {
@@ -173,14 +203,28 @@ const AdminSettings: React.FC = () => {
 
           {/* Model Selection */}
           <div className="space-y-2">
-            <Label htmlFor={`${provider}-model`}>{isRTL ? 'النموذج' : 'Model'}</Label>
+            <div className="flex justify-between items-center mb-1">
+              <Label htmlFor={`${provider}-model`}>{isRTL ? 'النموذج' : 'Model'}</Label>
+              {provider === 'openrouter' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleFetchModels}
+                  disabled={fetchingModels || !config.apiKey}
+                  className="h-6 px-2 text-xs"
+                >
+                  {fetchingModels ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <RefreshCw className="w-3 h-3 mr-1" />}
+                  {isRTL ? 'تحديث القائمة' : 'Fetch Models'}
+                </Button>
+              )}
+            </div>
             <select
               id={`${provider}-model`}
               value={config.model}
               onChange={(e) => updateProviderConfig(provider, { model: e.target.value })}
               className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
             >
-              {AVAILABLE_MODELS[provider as keyof typeof AVAILABLE_MODELS].map((model) => (
+              {(provider === 'openrouter' && openRouterModels.length > 0 ? openRouterModels : AVAILABLE_MODELS[provider as keyof typeof AVAILABLE_MODELS]).map((model) => (
                 <option key={model.value} value={model.value}>
                   {model.label}
                 </option>
@@ -317,6 +361,7 @@ const AdminSettings: React.FC = () => {
                   <option value="openai">OpenAI (ChatGPT)</option>
                   <option value="claude">Anthropic (Claude)</option>
                   <option value="perplexity">Perplexity AI</option>
+                  <option value="openrouter">OpenRouter (Multiple Models)</option>
                 </select>
               </CardContent>
             </Card>
@@ -324,6 +369,7 @@ const AdminSettings: React.FC = () => {
             {renderProviderCard('openai', 'OpenAI (ChatGPT)', isRTL ? 'مزود ChatGPT من OpenAI' : 'OpenAI ChatGPT provider', 'https://platform.openai.com/docs/api-reference')}
             {renderProviderCard('claude', 'Anthropic (Claude)', isRTL ? 'مزود Claude من Anthropic' : 'Anthropic Claude provider', 'https://docs.anthropic.com/en/api/getting-started')}
             {renderProviderCard('perplexity', 'Perplexity AI', isRTL ? 'مزود Perplexity AI' : 'Perplexity AI provider', 'https://docs.perplexity.ai/')}
+            {renderProviderCard('openrouter', 'OpenRouter', isRTL ? 'مزود OpenRouter' : 'OpenRouter provider', 'https://openrouter.ai/docs')}
           </TabsContent>
 
           {/* Integrations Tab */}

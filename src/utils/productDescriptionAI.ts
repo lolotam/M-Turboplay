@@ -1,11 +1,13 @@
 import { callLLM } from './llmIntegration';
 import { LLMProvider } from '@/contexts/SettingsContext';
+import { generateEnhancedProductDescription, EnhancedProductDescriptionRequest } from './enhancedProductDescriptionAI';
 
 export interface ProductDescriptionRequest {
   productName: string;
   productImage?: string;
   language: 'ar' | 'en';
   provider?: LLMProvider;
+  useEnhanced?: boolean;
 }
 
 /**
@@ -15,7 +17,8 @@ export async function generateProductDescription({
   productName,
   productImage,
   language,
-  provider = 'openai'
+  provider = 'openai',
+  useEnhanced = true
 }: ProductDescriptionRequest): Promise<string> {
   try {
     // Get AI settings from localStorage or use defaults

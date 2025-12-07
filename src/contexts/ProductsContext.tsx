@@ -1,30 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { CurrencyPrices } from '@/types/currency';
 import { productService } from '@/services/database';
-
-export interface Product {
-  id: string;
-  title: string;
-  titleEn: string;
-  description: string;
-  descriptionEn: string;
-  price: number | CurrencyPrices; // Support both legacy single price and new multi-currency
-  originalPrice?: number | CurrencyPrices;
-  image: string;
-  images?: string[];
-  category?: 'guide' | 'physical' | 'consultation' | 'tshirts' | 'playstation' | 'xbox' | 'nintendo' | 'pc' | 'mobile' | 'accessories' | 'giftcards' | 'preorders' | 'retro'; // Legacy single category support
-  categories?: string[]; // New multiple categories support
-  isNew?: boolean;
-  isLimited?: boolean;
-  isDigital: boolean;
-  stock?: number;
-  sku?: string;
-  tags: string[];
-  status: 'active' | 'inactive' | 'draft';
-  rating?: number; // Product rating
-  createdAt: string;
-  updatedAt: string;
-}
+import { Product } from '@/types/product';
 
 interface ProductsState {
   products: Product[];
@@ -33,7 +10,7 @@ interface ProductsState {
 }
 
 interface ProductsContextType extends ProductsState {
-  addProduct: (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => Promise<boolean>;
+  addProduct: (product: Omit<Product, 'id' | 'seqId' | 'createdAt' | 'updatedAt'>) => Promise<boolean>;
   updateProduct: (id: string, product: Partial<Product>) => Promise<boolean>;
   deleteProduct: (id: string) => Promise<boolean>;
   getProductById: (id: string) => Product | undefined;
@@ -91,7 +68,7 @@ export const ProductsProvider: React.FC<ProductsProviderProps> = ({ children }) 
     }
   };
 
-  const addProduct = async (productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<boolean> => {
+  const addProduct = async (productData: Omit<Product, 'id' | 'seqId' | 'createdAt' | 'updatedAt'>): Promise<boolean> => {
     try {
       // Ensure images array exists and has at least one image
       const images = productData.images && productData.images.length > 0
@@ -111,7 +88,7 @@ export const ProductsProvider: React.FC<ProductsProviderProps> = ({ children }) 
         throw new Error('Failed to create product');
       }
 
-      setProductsState(prev =>({
+      setProductsState(prev => ({
         ...prev,
         products: [...prev.products, newProduct],
       }));
@@ -138,7 +115,7 @@ export const ProductsProvider: React.FC<ProductsProviderProps> = ({ children }) 
         if (images.length === 0) {
           console.warn('Cannot update product with empty images array. Keeping existing images.');
           // Get current product to preserve existing images
-          const currentProduct = products.find(p => p.id === id);
+          const currentProduct = productsState.products.find(p => p.id === id);
           if (currentProduct) {
             images = currentProduct.images || [currentProduct.image].filter(Boolean);
           }
@@ -159,7 +136,7 @@ export const ProductsProvider: React.FC<ProductsProviderProps> = ({ children }) 
         }
       } else if (productData.image !== undefined) {
         // If only the single image field is updated, sync it with images array
-        const currentProduct = products.find(p => p.id === id);
+        const currentProduct = productsState.products.find(p => p.id === id);
         if (currentProduct) {
           updatedData.images = [productData.image, ...(currentProduct.images || []).filter(img => img !== productData.image)];
         } else {

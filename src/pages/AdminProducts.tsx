@@ -8,15 +8,15 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from '@/components/ui/table';
-import { 
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -43,7 +43,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import { Product } from '@/contexts/ProductsContext';
+import { Product } from '@/types/product';
 import AdminNavHeader from '@/components/admin/AdminNavHeader';
 import { exportProductsToCSV } from '@/lib/csvExport';
 
@@ -80,8 +80,8 @@ const AdminProducts = () => {
       if (success) {
         toast({
           title: isRTL ? 'تم حذف المنتج' : 'Product Deleted',
-          description: isRTL ? 
-            `تم حذف "${product.title}" بنجاح` : 
+          description: isRTL ?
+            `تم حذف "${product.title}" بنجاح` :
             `"${product.titleEn}" has been deleted successfully`,
         });
       } else {
@@ -123,10 +123,10 @@ const AdminProducts = () => {
     try {
       const deletePromises = Array.from(selectedProducts).map(id => deleteProduct(id));
       const results = await Promise.allSettled(deletePromises);
-      
+
       const successCount = results.filter(r => r.status === 'fulfilled' && r.value).length;
       const failedCount = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value)).length;
-      
+
       if (successCount > 0) {
         toast({
           title: isRTL ? 'تم حذف المنتجات' : 'Products Deleted',
@@ -136,7 +136,7 @@ const AdminProducts = () => {
         });
         setSelectedProducts(new Set());
       }
-      
+
       if (failedCount > 0) {
         toast({
           title: isRTL ? 'تحذير' : 'Warning',
@@ -164,13 +164,13 @@ const AdminProducts = () => {
     console.log('Current isSelectionMode:', isSelectionMode);
     console.log('New state will be:', !isSelectionMode);
     console.log('Selected products count:', selectedProducts.size);
-    
+
     setIsSelectionMode(!isSelectionMode);
     if (isSelectionMode) {
       console.log('Clearing selected products...');
       setSelectedProducts(new Set());
     }
-    
+
     // Force re-render
     setTimeout(() => {
       console.log('=== STATE UPDATE COMPLETE ===');
@@ -419,7 +419,7 @@ const AdminProducts = () => {
     <div className="min-h-screen bg-background">
       {/* Admin Navigation Header */}
       <AdminNavHeader />
-      
+
       {/* Page Header */}
       <div className="border-b border-border bg-card/50">
         <div className="container mx-auto px-4 py-4">
@@ -436,22 +436,8 @@ const AdminProducts = () => {
 
           {/* Actions Section - Separate container for better layout control */}
           <div className="w-full">
-            {/* Debug Info - Remove in production */}
-            {process.env.NODE_ENV === 'development' && (
-              <div className="mb-3 p-2 bg-yellow-100 border border-yellow-300 rounded text-sm">
-                <strong>Debug Info:</strong> isSelectionMode: {isSelectionMode ? 'true' : 'false'},
-                Selected: {selectedProducts.size},
-                Button should be: {!isSelectionMode ? 'VISIBLE' : 'HIDDEN'}
-              </div>
-            )}
-
-            {/* Delete Products Button - Always visible when not in selection mode */}
-            <div className="mb-3 border-2 border-dashed border-red-300 p-3 rounded-lg bg-red-50">
-              <div className="text-center mb-2">
-                <span className="text-sm text-red-600 font-medium">
-                  {isRTL ? 'منطقة زر الحذف' : 'Delete Button Area'}
-                </span>
-              </div>
+            {/* Delete Products Button */}
+            <div className="mb-3">
               {!isSelectionMode && (
                 <Button
                   variant="destructive"
@@ -460,10 +446,9 @@ const AdminProducts = () => {
                     console.log('Delete Products button clicked!');
                     toggleSelectionMode();
                   }}
-                  className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-medium px-6 py-3 shadow-lg border-2 border-red-800 transition-all duration-200 min-h-12 text-lg"
+                  className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-medium px-6 py-3 shadow-lg transition-all duration-200 min-h-12 text-lg"
                   style={{
                     minWidth: '220px',
-                    zIndex: 1000,
                     position: 'relative',
                     display: 'inline-flex',
                     fontSize: '16px',
@@ -504,7 +489,7 @@ const AdminProducts = () => {
                     {selectedProducts.size} {isRTL ? 'محدد' : 'selected'}
                   </Badge>
                 </div>
-                
+
                 <div className="flex flex-col sm:flex-row gap-2">
                   {selectedProducts.size > 0 && (
                     <Button
@@ -600,7 +585,7 @@ const AdminProducts = () => {
                   dir={isRTL ? 'rtl' : 'ltr'}
                 />
               </div>
-              
+
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger className="w-full md:w-48">
                   <SelectValue placeholder={isRTL ? 'الفئة' : 'Category'} />
@@ -750,13 +735,12 @@ const AdminProducts = () => {
                         </div>
                       </TableCell>
                       <TableCell className="text-center">
-                        <span className={`text-sm ${
-                          product.stock === undefined || product.stock > 10
-                            ? 'text-green-600'
-                            : product.stock > 0
-                              ? 'text-orange-600'
-                              : 'text-red-600'
-                        }`}>
+                        <span className={`text-sm ${product.stock === undefined || product.stock > 10
+                          ? 'text-green-600'
+                          : product.stock > 0
+                            ? 'text-orange-600'
+                            : 'text-red-600'
+                          }`}>
                           {product.stock === undefined ?
                             (isRTL ? 'غير محدود' : 'Unlimited') :
                             product.stock
@@ -771,14 +755,14 @@ const AdminProducts = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => navigate(`/admin/products/view/${product.id}`)}
+                            onClick={() => navigate(`/admin/products/view/${product.seqId || product.id}`)}
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => navigate(`/admin/products/edit/${product.id}`)}
+                            onClick={() => navigate(`/admin/products/edit/${product.seqId || product.id}`)}
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
@@ -853,7 +837,7 @@ const AdminProducts = () => {
               {isRTL ? 'تأكيد الحذف الجماعي' : 'Confirm Bulk Deletion'}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {isRTL ? 
+              {isRTL ?
                 `هل أنت متأكد من حذف ${selectedProducts.size} منتج؟ هذا الإجراء لا يمكن التراجع عنه.` :
                 `Are you sure you want to delete ${selectedProducts.size} products? This action cannot be undone.`
               }

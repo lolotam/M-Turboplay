@@ -130,7 +130,7 @@ const RocketLeagueSection = () => {
               {/* Glow effect on hover */}
               <div className="absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-20 transition-opacity duration-300"
                 style={{
-                  backgroundImage: `linear-gradient(135deg, ${service.color.split(' ')[0].replace('from-', '')} 0%, ${service.color.split(' ')[2].replace('to-', '')} 100%)`
+                  backgroundImage: `linear-gradient(135deg, ${service.color.split(' ')[0]?.replace('from-', '')} 0%, ${service.color.split(' ')[2]?.replace('to-', '')} 100%)`
                 }}
               />
               

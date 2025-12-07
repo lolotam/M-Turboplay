@@ -13,13 +13,13 @@ const LoadingSpinner = ({ message = "جاري التحميل..." }: { message?: 
 
 // Lazy load page components to improve initial bundle size
 export const LazyIndex = lazy(() => import('../pages/Index'));
-export const LazyShop = lazy(() => import('../pages/Shop'));
+export const LazyShop = lazy(() => import('../pages/ShopEnhanced'));
 export const LazyAbout = lazy(() => import('../pages/About'));
 export const LazyContact = lazy(() => import('../pages/Contact'));
 export const LazyFAQ = lazy(() => import('../pages/FAQ'));
 export const LazyProductDetail = lazy(() => import('../pages/ProductDetail'));
 export const LazyCart = lazy(() => import('../pages/Cart'));
-export const LazyCheckout = lazy(() => import('../pages/Checkout'));
+export const LazyCheckout = lazy(() => import('../components/InvoiceCheckout'));
 export const LazyPaymentSuccess = lazy(() => import('../pages/PaymentSuccess'));
 export const LazyPrivacyPolicy = lazy(() => import('../pages/PrivacyPolicy'));
 export const LazyTermsOfService = lazy(() => import('../pages/TermsOfService'));

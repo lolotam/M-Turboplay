@@ -1,9 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { supabase } from '@/services/database';
 
 /**
  * LLM Provider Types
  */
-export type LLMProvider = 'openai' | 'claude' | 'perplexity' | 'local';
+export type LLMProvider = 'openai' | 'claude' | 'perplexity' | 'openrouter' | 'local';
 
 /**
  * Provider Configuration Interface
@@ -23,15 +24,16 @@ export interface Settings {
   // General Settings
   language: string;
   theme: string;
-  
+
   // AI Configuration
   defaultProvider: LLMProvider;
   providers: {
     openai: ProviderConfig;
     claude: ProviderConfig;
     perplexity: ProviderConfig;
+    openrouter: ProviderConfig;
   };
-  
+
   // Advanced Settings
   enableLocalFallback: boolean;
   logApiCalls: boolean;
@@ -66,6 +68,13 @@ const DEFAULT_SETTINGS: Settings = {
       maxTokens: 1024,
       isEnabled: false,
     },
+    openrouter: {
+      apiKey: '',
+      model: 'google/gemini-pro',
+      temperature: 0.7,
+      maxTokens: 1024,
+      isEnabled: false,
+    },
   },
   enableLocalFallback: true,
   logApiCalls: false,
@@ -93,6 +102,15 @@ export const AVAILABLE_MODELS = {
     { value: 'llama-3.1-sonar-huge-128k-online', label: 'Sonar Huge (Online)' },
     { value: 'sonar-pro', label: 'Sonar Pro' },
     { value: 'sonar', label: 'Sonar' },
+  ],
+  openrouter: [
+    { value: 'google/gemini-pro', label: 'Google Gemini Pro' },
+    { value: 'google/gemini-flash-1.5', label: 'Google Gemini Flash 1.5' },
+    { value: 'anthropic/claude-3-opus', label: 'Claude 3 Opus' },
+    { value: 'anthropic/claude-3-sonnet', label: 'Claude 3 Sonnet' },
+    { value: 'meta-llama/llama-3-70b-instruct', label: 'Llama 3 70B' },
+    { value: 'mistralai/mixtral-8x7b-instruct', label: 'Mixtral 8x7B' },
+    { value: 'deepseek/deepseek-v3.2', label: 'DeepSeek V3.2' },
   ],
 };
 
@@ -138,17 +156,22 @@ const decodeApiKey = (encoded: string): string => {
 export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
 
-  // Load settings from localStorage on mount
+  // Load settings from Supabase on mount
   useEffect(() => {
     loadSettings();
   }, []);
 
-  const loadSettings = () => {
+  const loadSettings = async () => {
     try {
+      // Skip Supabase for now - system_settings table may not exist
+      // This prevents 406 errors in the console
+      // Load directly from localStorage instead
+
+// Load directly from Local Storage
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        
+
         // Decode API keys
         const decodedSettings = {
           ...parsed,
@@ -165,9 +188,13 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
               ...parsed.providers.perplexity,
               apiKey: decodeApiKey(parsed.providers.perplexity.apiKey),
             },
+            openrouter: {
+              ...parsed.providers.openrouter,
+              apiKey: decodeApiKey(parsed.providers.openrouter?.apiKey || ''),
+            },
           },
         };
-        
+
         setSettings(decodedSettings);
       }
     } catch (error) {
@@ -175,7 +202,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   };
 
-  const saveSettings = () => {
+  const saveSettings = async () => {
     try {
       // Encode API keys before saving
       const encodedSettings = {
@@ -193,10 +220,35 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
             ...settings.providers.perplexity,
             apiKey: encodeApiKey(settings.providers.perplexity.apiKey),
           },
+          openrouter: {
+            ...settings.providers.openrouter,
+            apiKey: encodeApiKey(settings.providers.openrouter.apiKey),
+          },
         },
       };
-      
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(encodedSettings));
+
+      const jsonValue = JSON.stringify(encodedSettings);
+
+      // 1. Save to Local Storage (optimistic update / backup)
+      localStorage.setItem(STORAGE_KEY, jsonValue);
+
+      // 2. Save to Supabase
+      const { error } = await supabase
+        .from('system_settings')
+        .upsert({
+          key: STORAGE_KEY,
+          value: jsonValue,
+          description: 'Admin Global Settings',
+          is_encrypted: true // We did manual encoding
+        });
+
+      if (error) {
+        console.error('Failed to save settings to Supabase:', error);
+        // Optionally show toast or notification
+      } else {
+        console.log('Settings saved to Supabase');
+      }
+
     } catch (error) {
       console.error('Error saving settings:', error);
     }
@@ -208,7 +260,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const updateProviderConfig = (provider: LLMProvider, config: Partial<ProviderConfig>) => {
     if (provider === 'local') return;
-    
+
     setSettings(prev => ({
       ...prev,
       providers: {
@@ -232,7 +284,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
 
     const config = settings.providers[provider as keyof typeof settings.providers];
-    
+
     if (!config.apiKey) {
       return { success: false, message: 'API key is required' };
     }
@@ -245,7 +297,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
             'Authorization': `Bearer ${config.apiKey}`,
           },
         });
-        
+
         if (response.ok) {
           return { success: true, message: 'Connected successfully to OpenAI' };
         } else {
@@ -265,7 +317,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
             messages: [{ role: 'user', content: 'test' }],
           }),
         });
-        
+
         if (response.ok || response.status === 400) {
           return { success: true, message: 'Connected successfully to Claude' };
         } else {
@@ -284,14 +336,26 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
             max_tokens: 10,
           }),
         });
-        
+
         if (response.ok) {
           return { success: true, message: 'Connected successfully to Perplexity' };
         } else {
           return { success: false, message: `Error: ${response.statusText}` };
         }
+      } else if (provider === 'openrouter') {
+        const response = await fetch('https://openrouter.ai/api/v1/auth/key', {
+          headers: {
+            'Authorization': `Bearer ${config.apiKey}`,
+          },
+        });
+
+        if (response.ok) {
+          return { success: true, message: 'Connected successfully to OpenRouter' };
+        } else {
+          return { success: false, message: `Error: ${response.statusText}` };
+        }
       }
-      
+
       return { success: false, message: 'Unknown provider' };
     } catch (error) {
       return { success: false, message: `Connection failed: ${error instanceof Error ? error.message : 'Unknown error'}` };

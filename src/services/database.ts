@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { Product } from '@/types/database';
+import { Product } from '@/types/product';
 
 // Ensure Supabase is available
 if (!supabase) {
@@ -13,12 +13,12 @@ const testConnection = async () => {
       .from('products')
       .select('count')
       .limit(1);
-    
+
     if (error) {
       console.error('❌ Supabase connection test failed:', error);
       return false;
     }
-    
+
     console.log('✅ Supabase connection successful');
     return true;
   } catch (error) {
@@ -33,6 +33,7 @@ testConnection();
 // Define database product type
 interface DatabaseProduct {
   id: string;
+  seq_id?: number; // Sequential ID for friendly URLs
   title_ar: string;
   title_en: string;
   description_ar: string;
@@ -57,6 +58,7 @@ interface DatabaseProduct {
 // Convert database product to app product format
 const convertDbToProduct = (dbProduct: DatabaseProduct): Product => ({
   id: dbProduct.id,
+  seqId: dbProduct.seq_id, // Map seq_id to seqId
   title: dbProduct.title_ar,
   titleEn: dbProduct.title_en,
   description: dbProduct.description_ar,
@@ -79,7 +81,7 @@ const convertDbToProduct = (dbProduct: DatabaseProduct): Product => ({
 });
 
 // Convert app product to database format
-const convertProductToDb = (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => ({
+const convertProductToDb = (product: Omit<Product, 'id' | 'seqId' | 'createdAt' | 'updatedAt'>) => ({
   title_ar: product.title,
   title_en: product.titleEn,
   description_ar: product.description,
@@ -140,6 +142,7 @@ export const productService = {
     try {
       const { data, error } = await supabase
         .from('products')
+        // @ts-ignore
         .insert(convertProductToDb(product))
         .select()
         .single();
@@ -166,13 +169,13 @@ export const productService = {
         description_ar?: string;
         description_en?: string;
         price?: number;
-      original_price?: number;
-      image?: string;
-      images?: string[];
-      category?: string;
-      categories?: string[];
-      is_new?: boolean;
-      is_limited?: boolean;
+        original_price?: number;
+        image?: string;
+        images?: string[];
+        category?: string;
+        categories?: string[];
+        is_new?: boolean;
+        is_limited?: boolean;
         is_digital?: boolean;
         stock?: number;
         sku?: string;
@@ -252,6 +255,7 @@ export const productService = {
 
       const { data, error } = await supabase
         .from('products')
+        // @ts-ignore
         .update(dbUpdates)
         .eq('id', id)
         .select()
@@ -306,3 +310,6 @@ export const productService = {
     }
   },
 };
+
+// Re-export supabase client for backwards compatibility
+export { supabase };

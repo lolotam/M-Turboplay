@@ -14,12 +14,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  User, 
-  MapPin, 
-  CreditCard, 
+import {
+  ChevronLeft,
+  ChevronRight,
+  User,
+  MapPin,
   CheckCircle,
   Shield,
   Truck,
@@ -33,7 +32,6 @@ import ShippingInfoStep from "@/components/checkout/ShippingInfoStep";
 import PaymentInfoStep from "@/components/checkout/PaymentInfoStep";
 import OrderReviewStep from "@/components/checkout/OrderReviewStep";
 import CheckoutBreadcrumb from "@/components/checkout/CheckoutBreadcrumb";
-import StripePayment from "@/components/payment/StripePayment";
 
 // Validation schemas
 const customerInfoSchema = z.object({
@@ -54,18 +52,8 @@ const shippingInfoSchema = z.object({
   notes: z.string().optional(),
 });
 
-const paymentInfoSchema = z.object({
-  paymentMethod: z.enum(["stripe"], {
-    required_error: "اختر طريقة الدفع",
-  }),
-  agreeToTerms: z.boolean().refine(val => val === true, {
-    message: "يجب الموافقة على الشروط والأحكام",
-  }),
-});
-
 type CustomerInfo = z.infer<typeof customerInfoSchema>;
 type ShippingInfo = z.infer<typeof shippingInfoSchema>;
-type PaymentInfo = z.infer<typeof paymentInfoSchema>;
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -74,7 +62,6 @@ const Checkout = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [customerData, setCustomerData] = useState<CustomerInfo | null>(null);
   const [shippingData, setShippingData] = useState<ShippingInfo | null>(null);
-  const [paymentData, setPaymentData] = useState<PaymentInfo | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [stepTransition, setStepTransition] = useState(false);
 
@@ -110,9 +97,7 @@ const Checkout = () => {
   const steps = [
     { number: 1, title: "معلومات العميل", icon: User },
     { number: 2, title: "عنوان التوصيل", icon: MapPin },
-    { number: 3, title: "طريقة الدفع", icon: CreditCard },
-    { number: 4, title: "مراجعة الطلب", icon: CheckCircle },
-    { number: 5, title: "الدفع", icon: CreditCard },
+    { number: 3, title: "مراجعة الطلب", icon: CheckCircle },
   ];
 
   const hasPhysicalItems = state.items.some(item => !item.isDigital);
@@ -128,13 +113,13 @@ const Checkout = () => {
     await new Promise(resolve => setTimeout(resolve, 300));
 
     if (hasPhysicalItems) {
-      setCurrentStep(prev => Math.min(prev + 1, 5));
+      setCurrentStep(prev => Math.min(prev + 1, 3));
     } else {
       // Skip step 2 for digital-only orders
       if (currentStep === 1) {
         setCurrentStep(3);
       } else {
-        setCurrentStep(prev => Math.min(prev + 1, 5));
+        setCurrentStep(prev => Math.min(prev + 1, 3));
       }
     }
 
@@ -164,7 +149,7 @@ const Checkout = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       <main className="container mx-auto px-4 py-8">
         {/* Breadcrumb Navigation */}
         <CheckoutBreadcrumb
@@ -186,16 +171,14 @@ const Checkout = () => {
           <div className="flex items-center justify-between mb-4">
             {activeSteps.map((step) => (
               <div key={step.number} className="flex items-center">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  currentStep >= step.number 
-                    ? 'bg-primary text-primary-foreground' 
-                    : 'bg-muted text-muted-foreground'
-                }`}>
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${currentStep >= step.number
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground'
+                  }`}>
                   <step.icon className="w-5 h-5" />
                 </div>
-                <span className={`ml-2 text-sm font-medium ${
-                  currentStep >= step.number ? 'text-primary' : 'text-muted-foreground'
-                }`}>
+                <span className={`ml-2 text-sm font-medium ${currentStep >= step.number ? 'text-primary' : 'text-muted-foreground'
+                  }`}>
                   {step.title}
                 </span>
               </div>
@@ -240,26 +223,47 @@ const Checkout = () => {
               )}
 
               {currentStep === 3 && (
-                <PaymentInfoStep
-                  onNext={async (data) => {
-                    setPaymentData(data);
-                    await nextStep();
-                  }}
-                  onPrev={prevStep}
-                  initialData={paymentData}
-                />
-              )}
-
-              {currentStep === 4 && (
                 <OrderReviewStep
                   customerData={customerData}
                   shippingData={shippingData}
-                  paymentData={paymentData}
                   onPrev={prevStep}
                   onConfirm={async () => {
                     setIsLoading(true);
                     try {
-                      await nextStep(); // Move to payment step
+                      // Prepare order data
+                      const orderData = {
+                        customer: customerData,
+                        shipping: shippingData,
+                        items: state.items.map(item => ({
+                          id: item.id,
+                          name: item.name,
+                          price: item.price,
+                          quantity: item.quantity,
+                          image: item.image,
+                          isDigital: item.isDigital
+                        })),
+                        total: state.items.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+                        orderDate: new Date().toISOString()
+                      };
+
+                      // Send to n8n webhook
+                      const response = await fetch('https://n8n-waleed.shop/webhook-test/m-turboplay', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(orderData)
+                      });
+
+                      if (response.ok) {
+                        toast({
+                          title: "تم إرسال الطلب بنجاح!",
+                          description: "سيتم التواصل معك قريباً",
+                        });
+                        navigate("/payment-success");
+                      } else {
+                        throw new Error('Failed to send order');
+                      }
                     } catch (error) {
                       toast({
                         title: "خطأ",
@@ -325,8 +329,8 @@ const OrderSummary = () => {
           {state.items.map((item) => (
             <div key={item.id} className="flex items-center gap-3">
               <div className="w-12 h-12 bg-accent rounded-lg overflow-hidden">
-                <img 
-                  src={item.image} 
+                <img
+                  src={item.image}
                   alt={item.title}
                   className="w-full h-full object-cover"
                 />

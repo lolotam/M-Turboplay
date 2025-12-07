@@ -358,34 +358,6 @@ const Cart = () => {
                     </>
                   )}
                 </Button>
-
-                {/* Trust Badges */}
-                <div className="space-y-2 pt-4 border-t">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Shield className="w-4 h-4 text-green-500" />
-                    دفع آمن ومشفر
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Truck className="w-4 h-4 text-blue-500" />
-                    شحن مجاني للمنتجات الرقمية
-                  </div>
-                </div>
-
-                {/* Payment Methods */}
-                <div className="pt-4 border-t">
-                  <p className="text-sm font-medium mb-2">طرق الدفع المتاحة:</p>
-                  <div className="flex gap-2">
-                    <div className="w-12 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded text-white text-xs flex items-center justify-center font-bold">
-                      KNET
-                    </div>
-                    <div className="w-12 h-8 bg-gray-800 rounded text-white text-xs flex items-center justify-center font-bold">
-                      VISA
-                    </div>
-                    <div className="w-12 h-8 bg-red-500 rounded text-white text-xs flex items-center justify-center font-bold">
-                      MC
-                    </div>
-                  </div>
-                </div>
               </CardContent>
             </Card>
           </div>

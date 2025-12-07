@@ -163,6 +163,55 @@ export async function callPerplexity(
 }
 
 /**
+ * Call OpenRouter API using SDK
+ * User specified @openrouter/sdk.
+ */
+import { OpenRouter } from '@openrouter/sdk';
+
+export async function callOpenRouter(
+  prompt: string,
+  config: ProviderConfig
+): Promise<LLMResponse> {
+  try {
+    const client = new OpenRouter({
+      apiKey: config.apiKey,
+    });
+
+    const extraBody: any = {};
+
+    // Add reasoning for DeepSeek models if needed
+    if (config.model.includes('deepseek')) {
+      extraBody.reasoning = { enabled: true };
+    }
+
+    const response = await client.chat.complete({
+      model: config.model,
+      messages: [
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      ...extraBody // Pass extra parameters
+    } as any); // Cast to any to allow extra properties like reasoning
+
+    return {
+      content: response.choices[0]?.message?.content || '',
+      provider: 'openrouter',
+      model: config.model,
+      tokensUsed: response.usage?.total_tokens,
+    };
+  } catch (error) {
+    return {
+      content: '',
+      provider: 'openrouter',
+      model: config.model,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+    };
+  }
+}
+
+/**
  * Main function to call LLM based on provider
  */
 export async function callLLM(
@@ -182,6 +231,8 @@ export async function callLLM(
       return callClaude(prompt, config);
     case 'perplexity':
       return callPerplexity(prompt, config);
+    case 'openrouter':
+      return callOpenRouter(prompt, config);
     case 'local':
       // Return empty response for local (will use existing AI query parser)
       return {

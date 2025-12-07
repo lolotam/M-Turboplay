@@ -16,7 +16,16 @@ const AdminProductView: React.FC = () => {
   const { addItem } = useCartActions();
   const isRTL = i18n.language === 'ar';
 
-  const product = products.find(p => p.id === id);
+  /* eslint-disable eqeqeq */
+  const product = products.find(p => {
+    // Check if looking up by sequence ID (if id param is numeric)
+    const isSeqIdLookup = !isNaN(Number(id));
+    if (isSeqIdLookup && p.seqId) {
+      return p.seqId == Number(id);
+    }
+    // Fallback to UUID match
+    return p.id === id;
+  });
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -107,7 +116,7 @@ const AdminProductView: React.FC = () => {
     price: typeof product.price === 'number' ? product.price : product.price.KWD,
     originalPrice: product.originalPrice ? (typeof product.originalPrice === 'number' ? product.originalPrice : product.originalPrice.KWD) : undefined,
     image: product.image,
-    category: product.category,
+    category: product.category as any,
     isNew: product.isNew,
     isLimited: product.isLimited,
     rating: 4.8,
@@ -143,7 +152,7 @@ const AdminProductView: React.FC = () => {
           </div>
 
           <Button
-            onClick={() => navigate(`/admin/products/edit/${product.id}`)}
+            onClick={() => navigate(`/admin/products/edit/${product.seqId || product.id}`)}
             className="bg-purple-600 hover:bg-purple-700"
           >
             <Edit className="w-4 h-4 mr-2" />

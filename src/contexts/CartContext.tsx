@@ -23,6 +23,7 @@ export interface CartState {
   promoCode: string;
   promoDiscount: number;
   promoDiscountType: 'percentage' | 'fixed';
+  currency: string;
 }
 
 export type CartAction =

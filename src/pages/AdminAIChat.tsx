@@ -94,7 +94,7 @@ const AdminAIChat: React.FC = () => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [selectedProvider, setSelectedProvider] = useState<LLMProvider>(settings.defaultProvider);
   const [isTrainingMode, setIsTrainingMode] = useState(false);
-  const [trainingData, setTrainingData] = useState<Array<{question: string, answer: string, category: string}>>([]);
+  const [trainingData, setTrainingData] = useState<Array<{ question: string, answer: string, category: string }>>([]);
   const [currentTrainingStep, setCurrentTrainingStep] = useState<'waiting' | 'answering' | 'learning'>('waiting');
 
   // تحليل البيانات الكاملة
@@ -622,7 +622,7 @@ const AdminAIChat: React.FC = () => {
 
   const handleTraining = () => {
     setIsTrainingMode(!isTrainingMode);
-    
+
     if (!isTrainingMode) {
       const trainingMessage: Message = {
         id: `training-${Date.now()}`,
@@ -645,7 +645,7 @@ const AdminAIChat: React.FC = () => {
     } else {
       setIsTrainingMode(false);
       setCurrentTrainingStep('waiting');
-      
+
       const exitMessage: Message = {
         id: `exit-training-${Date.now()}`,
         role: 'assistant',
@@ -705,7 +705,7 @@ const AdminAIChat: React.FC = () => {
 
     if (matchedQuestion) {
       setCurrentTrainingStep('learning');
-      
+
       // Add to training data
       const newTrainingItem = {
         question: userInput,
@@ -724,7 +724,7 @@ const AdminAIChat: React.FC = () => {
       };
 
       setChatMessages(prev => [...prev, learningMessage]);
-      
+
       toast({
         title: isRTL ? '✅ تم التعلم' : '✅ Learned',
         description: isRTL
@@ -826,6 +826,9 @@ const AdminAIChat: React.FC = () => {
                   <option value="perplexity" disabled={!settings.providers.perplexity.isEnabled || !settings.providers.perplexity.apiKey}>
                     {isRTL ? '🔍 Perplexity' : '🔍 Perplexity'} {settings.providers.perplexity.isEnabled && settings.providers.perplexity.apiKey ? '✓' : '⚠️'}
                   </option>
+                  <option value="openrouter" disabled={!settings.providers.openrouter?.isEnabled || !settings.providers.openrouter?.apiKey}>
+                    {isRTL ? '⚡ OpenRouter' : '⚡ OpenRouter'} {settings.providers.openrouter?.isEnabled && settings.providers.openrouter?.apiKey ? '✓' : '⚠️'}
+                  </option>
                 </select>
                 <Button
                   variant="ghost"
@@ -845,7 +848,7 @@ const AdminAIChat: React.FC = () => {
                 className={`${isTrainingMode
                   ? 'bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-900 hover:to-black text-white border-gray-700'
                   : 'bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 border-gray-400 text-gray-800'
-                } transition-all duration-300`}
+                  } transition-all duration-300`}
               >
                 <Brain className={`w-4 h-4 mr-2 ${isTrainingMode ? 'text-white' : 'text-gray-700'}`} />
                 {isRTL ? 'التدريب' : 'Training'}
@@ -887,11 +890,10 @@ const AdminAIChat: React.FC = () => {
                           )}
 
                           <div
-                            className={`max-w-[85%] rounded-2xl px-4 py-3 ${
-                              message.role === 'user'
+                            className={`max-w-[85%] rounded-2xl px-4 py-3 ${message.role === 'user'
                                 ? 'bg-primary text-primary-foreground'
                                 : 'bg-muted'
-                            }`}
+                              }`}
                           >
                             <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
                               {message.content}
@@ -928,13 +930,12 @@ const AdminAIChat: React.FC = () => {
                                         handleBulkOperation(action.data);
                                       }
                                     }}
-                                    className={`w-full ${
-                                      action.type === 'delete'
+                                    className={`w-full ${action.type === 'delete'
                                         ? 'bg-red-600 hover:bg-red-700 text-white'
                                         : action.type === 'create'
-                                        ? 'bg-green-600 hover:bg-green-700 text-white'
-                                        : ''
-                                    }`}
+                                          ? 'bg-green-600 hover:bg-green-700 text-white'
+                                          : ''
+                                      }`}
                                     size="sm"
                                     variant={action.type === 'delete' || action.type === 'create' ? 'default' : 'outline'}
                                   >

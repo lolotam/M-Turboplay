@@ -26,7 +26,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { CurrencyPrices, SUPPORTED_CURRENCIES } from '@/types/currency';
 import { ImageManager } from '@/components/ui/image-manager';
-import { generateProductDescription } from '@/utils/productDescriptionAI';
+import { generateEnhancedProductDescription, EnhancedProductDescriptionRequest } from '@/utils/enhancedProductDescriptionAI';
 import { Wand2 } from 'lucide-react';
 
 const AdminProductEdit = () => {
@@ -77,6 +77,7 @@ const AdminProductEdit = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [generatingArabic, setGeneratingArabic] = useState(false);
   const [generatingEnglish, setGeneratingEnglish] = useState(false);
+  const [generationMetadata, setGenerationMetadata] = useState<any>(null);
 
   const generateAIDescription = async (language: 'ar' | 'en') => {
     if (!formData.title.trim() && !formData.titleEn.trim()) {
@@ -92,40 +93,88 @@ const AdminProductEdit = () => {
     const setGenerating = isArabic ? setGeneratingArabic : setGeneratingEnglish;
 
     setGenerating(true);
+    setGenerationMetadata(null);
 
     try {
-      const productName = isArabic ? formData.title : formData.titleEn;
-      const imageUrl = formData.images.length > 0 ? formData.images[0] : undefined;
-
-      const description = await generateProductDescription({
-        productName,
-        productImage: imageUrl,
+      const request: EnhancedProductDescriptionRequest = {
+        productName: formData.title,
+        productNameEn: formData.titleEn,
+        productDescriptionEn: formData.descriptionEn, // Pass English description for AI context
+        productImages: formData.images,
         language,
-      });
+        enableImageAnalysis: true,
+        enableValidation: isArabic,
+        enableFallback: true,
+        culturalLevel: 'moderate',
+        targetAudience: 'casual',
+        promptComplexity: 'standard'
+      };
 
-      if (isArabic) {
-        setFormData(prev => ({ ...prev, description }));
+      const result = await generateEnhancedProductDescription(request);
+
+      if (result.description && result.description.trim().length > 0) {
+        if (isArabic) {
+          setFormData(prev => ({ ...prev, description: result.description }));
+        } else {
+          setFormData(prev => ({ ...prev, descriptionEn: result.description }));
+        }
       } else {
-        setFormData(prev => ({ ...prev, descriptionEn: description }));
+        throw new Error(isRTL ? 'فشل في توليد وصف صالح' : 'Failed to generate valid description');
+      }
+
+      setGenerationMetadata(result.metadata);
+
+      // Show validation feedback if available
+      if (result.metadata.validation && result.metadata.validation.score < 70) {
+        toast({
+          title: isRTL ? 'جودة الوصف منخفضة' : 'Low Description Quality',
+          description: isRTL ? 'الوصف المولد يحتاج إلى تحسين. يرجى مراجعة التوصيات.' : 'Generated description needs improvement. Please review recommendations.',
+          variant: 'default',
+          duration: 5000
+        });
+      } else {
+        toast({
+          title: isRTL ? 'تم إنشاء الوصف' : 'Description Generated',
+          description: isRTL ? 'تم إنشاء الوصف بنجاح باستخدام الذكاء الاصطناعي المعزز' : 'Description generated successfully using enhanced AI',
+        });
+      }
+    } catch (error) {
+      console.error('Enhanced AI Description Generation Error:', error);
+
+      // Provide specific error messages based on error type
+      let errorMessage = isRTL ? 'فشل في إنشاء الوصف. يرجى المحاولة مرة أخرى.' : 'Failed to generate description. Please try again.';
+
+      if (error instanceof Error) {
+        if (error.message.includes('API key')) {
+          errorMessage = isRTL ? 'مفتاح API للذكاء الاصطناعي غير مهيأر. يرجى تكوين الإعدادات في لوحة التحكم.' : 'AI provider API key not configured. Please configure settings in admin panel.';
+        } else if (error.message.includes('network') || error.message.includes('fetch')) {
+          errorMessage = isRTL ? 'خطأ في الشبكة. يرجى فحص الاتصال بالإنترنت والمحاولة مرة أخرى.' : 'Network error. Please check your internet connection and try again.';
+        } else if (error.message.includes('timeout')) {
+          errorMessage = isRTL ? 'انتهت مدة الانتظار. يرجى المحاولة مرة أخرى.' : 'Request timeout. Please try again.';
+        }
       }
 
       toast({
-        title: isRTL ? 'تم إنشاء الوصف' : 'Description Generated',
-        description: isRTL ? 'تم إنشاء الوصف بنجاح باستخدام الذكاء الاصطناعي' : 'Description generated successfully using AI',
-      });
-    } catch (error) {
-      console.error('AI Description Generation Error:', error);
-      toast({
         title: isRTL ? 'خطأ في إنشاء الوصف' : 'Error Generating Description',
-        description: error instanceof Error ? error.message : (isRTL ? 'فشل في إنشاء الوصف. يرجى المحاولة مرة أخرى.' : 'Failed to generate description. Please try again.'),
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
       setGenerating(false);
+      setGenerationMetadata(null);
     }
   };
 
-  const product = products.find(p => p.id === id);
+  /* eslint-disable eqeqeq */
+  const product = products.find(p => {
+    // Check if looking up by sequence ID (if id param is numeric)
+    const isSeqIdLookup = !isNaN(Number(id));
+    if (isSeqIdLookup && p.seqId) {
+      return p.seqId == Number(id);
+    }
+    // Fallback to UUID match
+    return p.id === id || p.sku === id;
+  });
 
   useEffect(() => {
     if (product) {
@@ -325,14 +374,14 @@ const AdminProductEdit = () => {
         category: formData.category,
         isNew: formData.isNew,
         isLimited: formData.isLimited,
-        isDigital: formData.category === 'guide' || formData.category === 'consultation',
-        stock: formData.category === 'guide' || formData.category === 'consultation' ? 999 : parseInt(formData.stock) || 0,
+        isDigital: formData.category === 'guide' || formData.category === 'consultation' || formData.stock === '999',
+        stock: parseInt(formData.stock) || 0,
         sku: formData.sku,
         tags: formData.tags,
         status: formData.status,
       };
 
-      const success = await updateProduct(id!, productData);
+      const success = await updateProduct(product.id, productData);
 
       if (success) {
         toast({
@@ -448,8 +497,8 @@ const AdminProductEdit = () => {
             </div>
 
             <div className="flex items-center gap-2">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => navigate(`/admin/products/view/${product.id}`)}
               >
                 <Eye className="w-4 h-4 mr-2" />
@@ -461,52 +510,52 @@ const AdminProductEdit = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Form */}
-            <div className="lg:col-span-2 space-y-6">
+        <form onSubmit={handleSubmit} className="max-w-6xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+            {/* Main Content Column */}
+            <div className="xl:col-span-2 space-y-8">
               {/* Basic Information */}
               <Card>
                 <CardHeader>
                   <CardTitle>{isRTL ? 'المعلومات الأساسية' : 'Basic Information'}</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="title">
-                        {isRTL ? 'العنوان (العربية)' : 'Title (Arabic)'} *
+                <CardContent className="space-y-6 p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="title" className="text-base font-semibold">
+                        {isRTL ? 'العنوان (العربية)' : 'Title (Arabic)'} <span className="text-destructive">*</span>
                       </Label>
                       <Input
                         id="title"
                         value={formData.title}
-                        onChange={(e) => setFormData(prev => ({...prev, title: e.target.value}))}
-                        placeholder={isRTL ? 'أدخل العنوان باللغة العربية' : 'Enter title in Arabic'}
-                        className={errors.title ? 'border-destructive' : ''}
+                        onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                        placeholder={isRTL ? 'مثال: لعبة فيفا 24' : 'Ex: FIFA 24 Game'}
+                        className={`h-11 ${errors.title ? 'border-destructive' : ''}`}
                         dir="rtl"
                       />
-                      {errors.title && <p className="text-xs text-destructive mt-1">{errors.title}</p>}
+                      {errors.title && <p className="text-xs text-destructive">{errors.title}</p>}
                     </div>
-                    
-                    <div>
-                      <Label htmlFor="titleEn">
-                        {isRTL ? 'العنوان (الإنجليزية)' : 'Title (English)'} *
+
+                    <div className="space-y-2">
+                      <Label htmlFor="titleEn" className="text-base font-semibold">
+                        {isRTL ? 'العنوان (الإنجليزية)' : 'Title (English)'} <span className="text-destructive">*</span>
                       </Label>
                       <Input
                         id="titleEn"
                         value={formData.titleEn}
-                        onChange={(e) => setFormData(prev => ({...prev, titleEn: e.target.value}))}
-                        placeholder={isRTL ? 'أدخل العنوان باللغة الإنجليزية' : 'Enter title in English'}
-                        className={errors.titleEn ? 'border-destructive' : ''}
+                        onChange={(e) => setFormData(prev => ({ ...prev, titleEn: e.target.value }))}
+                        placeholder={isRTL ? 'Ex: FIFA 24 Game' : 'Ex: FIFA 24 Game'}
+                        className={`h-11 ${errors.titleEn ? 'border-destructive' : ''}`}
                         dir="ltr"
                       />
-                      {errors.titleEn && <p className="text-xs text-destructive mt-1">{errors.titleEn}</p>}
+                      {errors.titleEn && <p className="text-xs text-destructive">{errors.titleEn}</p>}
                     </div>
                   </div>
 
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <Label htmlFor="description">
-                        {isRTL ? 'الوصف (العربية)' : 'Description (Arabic)'} *
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="description" className="text-base font-semibold">
+                        {isRTL ? 'الوصف (العربية)' : 'Description (Arabic)'} <span className="text-destructive">*</span>
                       </Label>
                       <Button
                         type="button"
@@ -514,20 +563,49 @@ const AdminProductEdit = () => {
                         size="sm"
                         onClick={() => generateAIDescription('ar')}
                         disabled={generatingArabic}
-                        className="flex items-center gap-1"
+                        className="flex items-center gap-2 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-blue-200 text-blue-700"
                       >
                         {generatingArabic ? (
                           <Loader2 className="w-3 h-3 animate-spin" />
                         ) : (
                           <Wand2 className="w-3 h-3" />
                         )}
-                        {isRTL ? 'إنشاء بالذكاء الاصطناعي' : 'Generate AI'}
+                        {isRTL ? 'توليد بالذكاء الاصطناعي' : 'Generate with AI'}
                       </Button>
+
+
+                      {/* Quality Score Display */}
+                      {generationMetadata && (
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            {isRTL ? 'الجودة:' : 'Quality:'}
+                            <div className="w-16 bg-gray-200 rounded-full h-2 relative">
+                              <div
+                                className="bg-green-500 h-full rounded-full transition-all duration-300"
+                                style={{ width: `${Math.max(0, Math.min(100, generationMetadata.confidence))}%` }}
+                              />
+                            </div>
+                            <span className="ml-2">{generationMetadata.confidence.toFixed(0)}%</span>
+                          </span>
+                          <span className="flex items-center gap-1">
+                            {isRTL ? 'المصدر:' : 'Source:'}
+                            <span className={`px-2 py-1 rounded text-xs ${generationMetadata.source === 'ai' ? 'bg-blue-100 text-blue-800' :
+                              generationMetadata.source === 'template' ? 'bg-orange-100 text-orange-800' :
+                                generationMetadata.source === 'hybrid' ? 'bg-purple-100 text-purple-800' :
+                                  'bg-gray-100 text-gray-800'
+                              }`}>
+                              {generationMetadata.source === 'ai' && (isRTL ? 'ذكاء اصطناعي' : 'AI')}
+                              {generationMetadata.source === 'template' && (isRTL ? 'قالب' : 'Template')}
+                              {generationMetadata.source === 'hybrid' && (isRTL ? 'مدمج' : 'Hybrid')}
+                            </span>
+                          </span>
+                        </div>
+                      )}
                     </div>
                     <Textarea
                       id="description"
                       value={formData.description}
-                      onChange={(e) => setFormData(prev => ({...prev, description: e.target.value}))}
+                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                       placeholder={isRTL ? 'أدخل وصف المنتج باللغة العربية' : 'Enter product description in Arabic'}
                       className={`min-h-20 ${errors.description ? 'border-destructive' : ''}`}
                       dir="rtl"
@@ -555,11 +633,39 @@ const AdminProductEdit = () => {
                         )}
                         {isRTL ? 'إنشاء بالذكاء الاصطناعي' : 'Generate AI'}
                       </Button>
+
+                      {/* English Quality Score Display */}
+                      {generationMetadata && (
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            {isRTL ? 'Quality:' : 'الجودة:'}
+                            <div className="w-16 bg-gray-200 rounded-full h-2 relative">
+                              <div
+                                className="bg-green-500 h-full rounded-full transition-all duration-300"
+                                style={{ width: `${Math.max(0, Math.min(100, generationMetadata.confidence))}%` }}
+                              />
+                            </div>
+                            <span className="ml-2">{generationMetadata.confidence.toFixed(0)}%</span>
+                          </span>
+                          <span className="flex items-center gap-1">
+                            {isRTL ? 'Source:' : 'المصدر:'}
+                            <span className={`px-2 py-1 rounded text-xs ${generationMetadata.source === 'ai' ? 'bg-blue-100 text-blue-800' :
+                              generationMetadata.source === 'template' ? 'bg-orange-100 text-orange-800' :
+                                generationMetadata.source === 'hybrid' ? 'bg-purple-100 text-purple-800' :
+                                  'bg-gray-100 text-gray-800'
+                              }`}>
+                              {generationMetadata.source === 'ai' && (isRTL ? 'ذكاء اصطناعي' : 'AI')}
+                              {generationMetadata.source === 'template' && (isRTL ? 'قالب' : 'Template')}
+                              {generationMetadata.source === 'hybrid' && (isRTL ? 'مدمج' : 'Hybrid')}
+                            </span>
+                          </span>
+                        </div>
+                      )}
                     </div>
                     <Textarea
                       id="descriptionEn"
                       value={formData.descriptionEn}
-                      onChange={(e) => setFormData(prev => ({...prev, descriptionEn: e.target.value}))}
+                      onChange={(e) => setFormData(prev => ({ ...prev, descriptionEn: e.target.value }))}
                       placeholder={isRTL ? 'أدخل وصف المنتج باللغة الإنجليزية' : 'Enter product description in English'}
                       className={`min-h-20 ${errors.descriptionEn ? 'border-destructive' : ''}`}
                       dir="ltr"
@@ -588,171 +694,239 @@ const AdminProductEdit = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {useSinglePrice ? (
-                    // Single Currency Pricing (KWD)
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="price">
-                          {isRTL ? 'السعر (د.ك)' : 'Price (KWD)'} *
-                        </Label>
-                        <Input
-                          id="price"
-                          type="number"
-                          step="0.001"
-                          min="0"
-                          value={formData.price}
-                          onChange={(e) => setFormData(prev => ({...prev, price: e.target.value}))}
-                          placeholder="0.000"
-                          className={errors.price ? 'border-destructive' : ''}
-                        />
-                        {errors.price && <p className="text-xs text-destructive mt-1">{errors.price}</p>}
-                      </div>
+                  <div className="p-6">
+                    {useSinglePrice ? (
+                      // Single Currency Pricing (KWD)
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <Label htmlFor="price" className="text-base font-semibold">
+                            {isRTL ? 'السعر (د.ك)' : 'Price (KWD)'} <span className="text-destructive">*</span>
+                          </Label>
+                          <div className="relative max-w-[200px]">
+                            <Input
+                              id="price"
+                              type="number"
+                              step="0.001"
+                              min="0"
+                              value={formData.price}
+                              onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
+                              placeholder="0.000"
+                              className={`pl-8 ${errors.price ? 'border-destructive' : ''}`}
+                            />
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">KWD</span>
+                          </div>
+                          {errors.price && <p className="text-xs text-destructive">{errors.price}</p>}
+                        </div>
 
-                      <div>
-                        <Label htmlFor="originalPrice">
-                          {isRTL ? 'السعر الأصلي (د.ك)' : 'Original Price (KWD)'}
-                        </Label>
+                        <div className="space-y-2">
+                          <Label htmlFor="originalPrice" className="text-base font-medium text-muted-foreground">
+                            {isRTL ? 'السعر الأصلي (قبل الخصم)' : 'Original Price (Before Discount)'}
+                          </Label>
+                          <div className="relative max-w-[200px]">
+                            <Input
+                              id="originalPrice"
+                              type="number"
+                              step="0.001"
+                              min="0"
+                              value={formData.originalPrice}
+                              onChange={(e) => setFormData(prev => ({ ...prev, originalPrice: e.target.value }))}
+                              placeholder="0.000"
+                              className={`pl-8 ${errors.originalPrice ? 'border-destructive' : ''}`}
+                            />
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">KWD</span>
+                          </div>
+                          {errors.originalPrice && <p className="text-xs text-destructive">{errors.originalPrice}</p>}
+                        </div>
+                      </div>
+                    ) : (
+                      // Multi-Currency Pricing
+                      <Tabs defaultValue="current" className="w-full">
+                        <TabsList className="grid w-full grid-cols-2">
+                          <TabsTrigger value="current">{isRTL ? 'الأسعار الحالية' : 'Current Prices'}</TabsTrigger>
+                          <TabsTrigger value="original">{isRTL ? 'الأسعار الأصلية' : 'Original Prices'}</TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="current" className="space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {SUPPORTED_CURRENCIES.map((currency) => (
+                              <div key={currency.code}>
+                                <Label htmlFor={`price-${currency.code}`}>
+                                  {isRTL ? `السعر (${currency.symbol})` : `Price (${currency.symbol})`}
+                                  {currency.code === 'KWD' && ' *'}
+                                </Label>
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-sm font-medium">{currency.symbol}</span>
+                                  <Input
+                                    id={`price-${currency.code}`}
+                                    type="number"
+                                    step={currency.decimals === 3 ? "0.001" : "0.01"}
+                                    min="0"
+                                    value={formData.prices[currency.code as keyof CurrencyPrices]}
+                                    onChange={(e) => setFormData(prev => ({
+                                      ...prev,
+                                      prices: {
+                                        ...prev.prices,
+                                        [currency.code]: e.target.value
+                                      }
+                                    }))}
+                                    placeholder={currency.decimals === 3 ? "0.000" : "0.00"}
+                                    className={errors[`price${currency.code}`] ? 'border-destructive' : ''}
+                                  />
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {isRTL ? currency.nameAr : currency.name}
+                                </p>
+                                {errors[`price${currency.code}`] && (
+                                  <p className="text-xs text-destructive mt-1">{errors[`price${currency.code}`]}</p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </TabsContent>
+
+                        <TabsContent value="original" className="space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {SUPPORTED_CURRENCIES.map((currency) => (
+                              <div key={currency.code}>
+                                <Label htmlFor={`original-price-${currency.code}`}>
+                                  {isRTL ? `السعر الأصلي (${currency.symbol})` : `Original Price (${currency.symbol})`}
+                                </Label>
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-sm font-medium">{currency.symbol}</span>
+                                  <Input
+                                    id={`original-price-${currency.code}`}
+                                    type="number"
+                                    step={currency.decimals === 3 ? "0.001" : "0.01"}
+                                    min="0"
+                                    value={formData.originalPrices[currency.code as keyof CurrencyPrices]}
+                                    onChange={(e) => setFormData(prev => ({
+                                      ...prev,
+                                      originalPrices: {
+                                        ...prev.originalPrices,
+                                        [currency.code]: e.target.value
+                                      }
+                                    }))}
+                                    placeholder={currency.decimals === 3 ? "0.000" : "0.00"}
+                                    className={errors[`originalPrice${currency.code}`] ? 'border-destructive' : ''}
+                                  />
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {isRTL ? currency.nameAr : currency.name}
+                                </p>
+                                {errors[`originalPrice${currency.code}`] && (
+                                  <p className="text-xs text-destructive mt-1">{errors[`originalPrice${currency.code}`]}</p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </TabsContent>
+                      </Tabs>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+
+
+              {/* Inventory & Stock Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Package className="w-5 h-5" />
+                    {isRTL ? 'المخزون والتعريف' : 'Inventory & Identification'}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6 p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="sku" className="text-base font-semibold">
+                        {isRTL ? 'رمز المنتج (SKU)' : 'Product SKU'} <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="sku"
+                        value={formData.sku}
+                        onChange={(e) => setFormData(prev => ({ ...prev, sku: e.target.value }))}
+                        placeholder="PROD-001"
+                        className={`font-mono ${errors.sku ? 'border-destructive' : ''}`}
+                      />
+                      {errors.sku && <p className="text-xs text-destructive">{errors.sku}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="stock" className="text-base font-semibold">
+                        {isRTL ? 'الكمية المتوفرة' : 'Stock Quantity'}
+                      </Label>
+                      <div className="flex items-center gap-4">
                         <Input
-                          id="originalPrice"
+                          id="stock"
                           type="number"
-                          step="0.001"
                           min="0"
-                          value={formData.originalPrice}
-                          onChange={(e) => setFormData(prev => ({...prev, originalPrice: e.target.value}))}
-                          placeholder="0.000"
-                          className={errors.originalPrice ? 'border-destructive' : ''}
+                          value={formData.stock}
+                          onChange={(e) => setFormData(prev => ({ ...prev, stock: e.target.value }))}
+                          placeholder="0"
+                          className="max-w-[150px]"
                         />
-                        {errors.originalPrice && <p className="text-xs text-destructive mt-1">{errors.originalPrice}</p>}
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            id="unlimited-stock"
+                            checked={formData.stock === '999' || formData.stock === ''}
+                            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, stock: checked ? '999' : '0' }))}
+                          />
+                          <Label htmlFor="unlimited-stock" className="text-sm cursor-pointer">
+                            {isRTL ? 'مخزون غير محدود (منتج رقمي)' : 'Unlimited (Digital)'}
+                          </Label>
+                        </div>
                       </div>
                     </div>
-                  ) : (
-                    // Multi-Currency Pricing
-                    <Tabs defaultValue="current" className="w-full">
-                      <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="current">{isRTL ? 'الأسعار الحالية' : 'Current Prices'}</TabsTrigger>
-                        <TabsTrigger value="original">{isRTL ? 'الأسعار الأصلية' : 'Original Prices'}</TabsTrigger>
-                      </TabsList>
-
-                      <TabsContent value="current" className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {SUPPORTED_CURRENCIES.map((currency) => (
-                            <div key={currency.code}>
-                              <Label htmlFor={`price-${currency.code}`}>
-                                {isRTL ? `السعر (${currency.symbol})` : `Price (${currency.symbol})`}
-                                {currency.code === 'KWD' && ' *'}
-                              </Label>
-                              <div className="flex items-center space-x-2">
-                                <span className="text-sm font-medium">{currency.symbol}</span>
-                                <Input
-                                  id={`price-${currency.code}`}
-                                  type="number"
-                                  step={currency.decimals === 3 ? "0.001" : "0.01"}
-                                  min="0"
-                                  value={formData.prices[currency.code as keyof CurrencyPrices]}
-                                  onChange={(e) => setFormData(prev => ({
-                                    ...prev,
-                                    prices: {
-                                      ...prev.prices,
-                                      [currency.code]: e.target.value
-                                    }
-                                  }))}
-                                  placeholder={currency.decimals === 3 ? "0.000" : "0.00"}
-                                  className={errors[`price${currency.code}`] ? 'border-destructive' : ''}
-                                />
-                              </div>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                {isRTL ? currency.nameAr : currency.name}
-                              </p>
-                              {errors[`price${currency.code}`] && (
-                                <p className="text-xs text-destructive mt-1">{errors[`price${currency.code}`]}</p>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </TabsContent>
-
-                      <TabsContent value="original" className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {SUPPORTED_CURRENCIES.map((currency) => (
-                            <div key={currency.code}>
-                              <Label htmlFor={`original-price-${currency.code}`}>
-                                {isRTL ? `السعر الأصلي (${currency.symbol})` : `Original Price (${currency.symbol})`}
-                              </Label>
-                              <div className="flex items-center space-x-2">
-                                <span className="text-sm font-medium">{currency.symbol}</span>
-                                <Input
-                                  id={`original-price-${currency.code}`}
-                                  type="number"
-                                  step={currency.decimals === 3 ? "0.001" : "0.01"}
-                                  min="0"
-                                  value={formData.originalPrices[currency.code as keyof CurrencyPrices]}
-                                  onChange={(e) => setFormData(prev => ({
-                                    ...prev,
-                                    originalPrices: {
-                                      ...prev.originalPrices,
-                                      [currency.code]: e.target.value
-                                    }
-                                  }))}
-                                  placeholder={currency.decimals === 3 ? "0.000" : "0.00"}
-                                  className={errors[`originalPrice${currency.code}`] ? 'border-destructive' : ''}
-                                />
-                              </div>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                {isRTL ? currency.nameAr : currency.name}
-                              </p>
-                              {errors[`originalPrice${currency.code}`] && (
-                                <p className="text-xs text-destructive mt-1">{errors[`originalPrice${currency.code}`]}</p>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </TabsContent>
-                    </Tabs>
-                  )}
+                  </div>
                 </CardContent>
               </Card>
 
               {/* Tags */}
               <Card>
                 <CardHeader>
-                  <CardTitle>{isRTL ? 'العلامات' : 'Tags'}</CardTitle>
+                  <CardTitle>{isRTL ? 'العلامات (Tags)' : 'Tags'}</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-4 p-6">
                   <div className="flex gap-2">
                     <Input
                       value={newTag}
                       onChange={(e) => setNewTag(e.target.value)}
                       onKeyPress={handleKeyPress}
-                      placeholder={isRTL ? 'أضف علامة...' : 'Add tag...'}
-                      className="flex-1"
+                      placeholder={isRTL ? 'أكتب علامة واضغط Enter...' : 'Type tag and press Enter...'}
+                      className="max-w-md"
                     />
-                    <Button type="button" onClick={addTag} variant="outline" size="sm">
-                      <Plus className="w-4 h-4" />
+                    <Button type="button" onClick={addTag} variant="secondary">
+                      <Plus className="w-4 h-4 mr-1" />
+                      {isRTL ? 'إضافة' : 'Add'}
                     </Button>
                   </div>
-                  
-                  {formData.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {formData.tags.map((tag, index) => (
-                        <Badge key={index} variant="secondary" className="cursor-pointer">
-                          {tag}
-                          <button
-                            type="button"
-                            onClick={() => removeTag(tag)}
-                            className="ml-1 hover:text-destructive"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
+
+                  <div className="flex flex-wrap gap-2 min-h-[40px] p-4 bg-muted/30 rounded-lg border border-dashed">
+                    {formData.tags.length === 0 && (
+                      <span className="text-muted-foreground text-sm italic">
+                        {isRTL ? 'لا توجد علامات. أضف بعض العلامات لتحسين البحث.' : 'No tags. Add some tags to improve search.'}
+                      </span>
+                    )}
+                    {formData.tags.map((tag, index) => (
+                      <Badge key={index} variant="secondary" className="px-3 py-1 text-sm flex items-center gap-2 hover:bg-secondary/80 transition-colors">
+                        {tag}
+                        <button
+                          type="button"
+                          onClick={() => removeTag(tag)}
+                          className="text-muted-foreground hover:text-destructive transition-colors focus:outline-none"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
             </div>
 
             {/* Sidebar */}
-            <div className="space-y-6">
+            <div className="space-y-8">
               {/* Product Settings */}
               <Card>
                 <CardHeader>
@@ -766,7 +940,7 @@ const AdminProductEdit = () => {
                     <Select
                       value={formData.category}
                       onValueChange={(value: 'guide' | 'physical' | 'consultation' | 'tshirts' | 'playstation' | 'xbox' | 'nintendo' | 'pc' | 'mobile' | 'accessories' | 'giftcards' | 'preorders' | 'retro') =>
-                        setFormData(prev => ({...prev, category: value}))
+                        setFormData(prev => ({ ...prev, category: value }))
                       }
                     >
                       <SelectTrigger>
@@ -827,8 +1001,8 @@ const AdminProductEdit = () => {
                     </Label>
                     <Select
                       value={formData.status}
-                      onValueChange={(value: 'active' | 'inactive' | 'draft') => 
-                        setFormData(prev => ({...prev, status: value}))
+                      onValueChange={(value: 'active' | 'inactive' | 'draft') =>
+                        setFormData(prev => ({ ...prev, status: value }))
                       }
                     >
                       <SelectTrigger>
@@ -848,35 +1022,6 @@ const AdminProductEdit = () => {
                     </Select>
                   </div>
 
-                  <div>
-                    <Label htmlFor="sku">
-                      {isRTL ? 'رمز المنتج (SKU)' : 'Product SKU'} *
-                    </Label>
-                    <Input
-                      id="sku"
-                      value={formData.sku}
-                      onChange={(e) => setFormData(prev => ({...prev, sku: e.target.value}))}
-                      placeholder="PROD-001"
-                      className={errors.sku ? 'border-destructive' : ''}
-                    />
-                    {errors.sku && <p className="text-xs text-destructive mt-1">{errors.sku}</p>}
-                  </div>
-
-                  {formData.category === 'physical' && (
-                    <div>
-                      <Label htmlFor="stock">
-                        {isRTL ? 'الكمية المتوفرة' : 'Stock Quantity'}
-                      </Label>
-                      <Input
-                        id="stock"
-                        type="number"
-                        min="0"
-                        value={formData.stock}
-                        onChange={(e) => setFormData(prev => ({...prev, stock: e.target.value}))}
-                        placeholder="0"
-                      />
-                    </div>
-                  )}
                 </CardContent>
               </Card>
 
@@ -914,10 +1059,10 @@ const AdminProductEdit = () => {
                     <Switch
                       id="isNew"
                       checked={formData.isNew}
-                      onCheckedChange={(checked) => setFormData(prev => ({...prev, isNew: checked}))}
+                      onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isNew: checked }))}
                     />
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <Label htmlFor="isLimited" className="text-sm">
                       {isRTL ? 'منتج محدود' : 'Limited Product'}
@@ -925,7 +1070,7 @@ const AdminProductEdit = () => {
                     <Switch
                       id="isLimited"
                       checked={formData.isLimited}
-                      onCheckedChange={(checked) => setFormData(prev => ({...prev, isLimited: checked}))}
+                      onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isLimited: checked }))}
                     />
                   </div>
                 </CardContent>
@@ -946,19 +1091,19 @@ const AdminProductEdit = () => {
                     </div>
                   )}
                 </Button>
-                
-                <Button 
-                  type="button" 
-                  variant="outline" 
+
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => navigate('/admin/products')}
                   disabled={isLoading}
                 >
                   {isRTL ? 'إلغاء' : 'Cancel'}
                 </Button>
 
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => navigate(`/admin/products/view/${product.id}`)}
                   disabled={isLoading}
                 >
@@ -970,7 +1115,7 @@ const AdminProductEdit = () => {
           </div>
         </form>
       </main>
-    </div>
+    </div >
   );
 };
 

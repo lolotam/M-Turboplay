@@ -125,7 +125,7 @@ const DigitalProducts = () => {
               {/* Glow effect on hover */}
               <div className="absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 transition-opacity duration-300"
                 style={{
-                  backgroundImage: `linear-gradient(135deg, ${product.color.split(' ')[0].replace('from-', '')} 0%, ${product.color.split(' ')[2].replace('to-', '')} 100%)`
+                  backgroundImage: `linear-gradient(135deg, ${product.color.split(' ')[0]?.replace('from-', '')} 0%, ${product.color.split(' ')[2]?.replace('to-', '')} 100%)`
                 }}
               />
               

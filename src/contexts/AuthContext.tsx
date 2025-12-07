@@ -56,13 +56,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     error: null,
   });
 
-  // Simulated admin credentials - in production, this would be handled by a backend API
+  // Admin credentials should be handled via environment variables in production
   const ADMIN_CREDENTIALS = {
-    email: 'mwaleedtam2016@gmail.com',
-    password: '454545',
+    email: import.meta.env.VITE_ADMIN_EMAIL || '',
+    password: import.meta.env.VITE_ADMIN_PASSWORD || '',
     user: {
       id: 'admin-1',
-      email: 'mwaleedtam2016@gmail.com',
+      email: import.meta.env.VITE_ADMIN_EMAIL || '',
       role: 'admin' as const,
       name: 'Store Administrator',
     }

@@ -10,22 +10,29 @@ import { MapPin, Phone, Mail, MessageCircle, Clock, Globe, Loader2 } from "lucid
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { emailService } from "@/services/emailService";
+import { contactFormSchema, ContactFormData } from '@/utils/validation';
+import { sanitizeInput } from '@/utils/security';
+import { useRateLimit } from '@/hooks/useRateLimit';
 
 const Contact = () => {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'ar';
-  const [formData, setFormData] = useState({
+
+  const [formData, setFormData] = useState<ContactFormData>({
     name: "",
     email: "",
-    phone: "",
-    robloxUsername: "",
     subject: "",
-    message: "",
-    preferredLanguage: "ar"
+    message: ""
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
+  const { isRateLimited, checkLimit, remainingRequests } = useRateLimit({
+    identifier: 'contact-form',
+    maxRequests: 5,
+    windowMs: 300000 // 5 minutes
+  });
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -69,10 +76,42 @@ const Contact = () => {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    
+    // Sanitize input to prevent XSS
+    const sanitizedValue = sanitizeInput(value);
+    
     setFormData(prev => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [name]: sanitizedValue
     }));
+
+    // Clear error for this field when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  const validateForm = (): boolean => {
+    try {
+      contactFormSchema.parse(formData);
+      setErrors({});
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const newErrors: Record<string, string> = {};
+        error.errors.forEach((err) => {
+          if (err.path.length > 0) {
+            newErrors[err.path[0]] = err.message;
+          }
+        });
+        setErrors(newErrors);
+      }
+      return false;
+    }
   };
 
   const contactMethods = [
@@ -216,85 +255,92 @@ const Contact = () => {
                 </p>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-6" noValidate>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium mb-2 block">
+                      <label className="text-sm font-medium mb-2 block" htmlFor="name">
                         {t('contactPage.name')} <span className="text-destructive">*</span>
                       </label>
                       <Input
+                        id="name"
                         name="name"
                         value={formData.name}
                         onChange={handleChange}
                         placeholder={isRTL ? 'أدخل اسمك الكامل' : 'Enter your full name'}
                         required
+                        aria-invalid={errors.name ? 'true' : 'false'}
+                        aria-describedby={errors.name ? 'name-error' : undefined}
                       />
+                      {errors.name && (
+                        <p id="name-error" className="text-sm text-destructive mt-1">
+                          {errors.name}
+                        </p>
+                      )}
                     </div>
                     <div>
-                      <label className="text-sm font-medium mb-2 block">
+                      <label className="text-sm font-medium mb-2 block" htmlFor="email">
                         {t('contactPage.emailAddress')} <span className="text-destructive">*</span>
                       </label>
                       <Input
+                        id="email"
                         name="email"
                         type="email"
                         value={formData.email}
                         onChange={handleChange}
                         placeholder="example@email.com"
                         required
+                        aria-invalid={errors.email ? 'true' : 'false'}
+                        aria-describedby={errors.email ? 'email-error' : undefined}
                       />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">
-                        {t('contactPage.phone')}
-                      </label>
-                      <Input
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleChange}
-                        placeholder="+965 55683677"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">
-                        {isRTL ? 'اسم المستخدم في Roblox (اختياري)' : 'Roblox Username (Optional)'}
-                      </label>
-                      <Input
-                        name="robloxUsername"
-                        value={formData.robloxUsername}
-                        onChange={handleChange}
-                        placeholder={isRTL ? 'اسم المستخدم' : 'Username'}
-                      />
+                      {errors.email && (
+                        <p id="email-error" className="text-sm text-destructive mt-1">
+                          {errors.email}
+                        </p>
+                      )}
                     </div>
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium mb-2 block">
+                    <label className="text-sm font-medium mb-2 block" htmlFor="subject">
                       {t('contactPage.subject')} <span className="text-destructive">*</span>
                     </label>
                     <Input
+                      id="subject"
                       name="subject"
                       value={formData.subject}
                       onChange={handleChange}
                       placeholder={isRTL ? 'ما هو موضوع استفسارك؟' : 'What is the subject of your inquiry?'}
                       required
+                      aria-invalid={errors.subject ? 'true' : 'false'}
+                      aria-describedby={errors.subject ? 'subject-error' : undefined}
                     />
+                    {errors.subject && (
+                      <p id="subject-error" className="text-sm text-destructive mt-1">
+                        {errors.subject}
+                      </p>
+                      )}
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium mb-2 block">
+                    <label className="text-sm font-medium mb-2 block" htmlFor="message">
                       {t('contactPage.message')} <span className="text-destructive">*</span>
                     </label>
                     <Textarea
+                      id="message"
                       name="message"
                       value={formData.message}
                       onChange={handleChange}
                       placeholder={isRTL ? 'اكتب رسالتك بالتفصيل...' : 'Write your message in detail...'}
                       rows={5}
                       required
+                      aria-invalid={errors.message ? 'true' : 'false'}
+                      aria-describedby={errors.message ? 'message-error' : undefined}
                     />
+                    {errors.message && (
+                      <p id="message-error" className="text-sm text-destructive mt-1">
+                        {errors.message}
+                      </p>
+                      )}
                   </div>
 
                   <div className="flex items-center gap-4">

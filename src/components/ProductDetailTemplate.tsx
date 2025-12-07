@@ -3,12 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  Clock, 
-  Truck, 
-  Shield, 
-  User, 
-  Heart, 
+import {
+  Clock,
+  Truck,
+  Shield,
+  User,
+  Heart,
   Share2,
   CheckCircle,
   AlertCircle,
@@ -19,6 +19,15 @@ import {
   Shirt
 } from 'lucide-react';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+  type CarouselApi
+} from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
 
 interface ProductDetailTemplateProps {
   product: {
@@ -54,32 +63,28 @@ const ProductDetailTemplate: React.FC<ProductDetailTemplateProps> = ({
 
   // State for image gallery
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [isAutoScrollEnabled, setIsAutoScrollEnabled] = useState(true);
-  const [isPaused, setIsPaused] = useState(false);
+  const [api, setApi] = useState<CarouselApi>();
 
   // Get all available images (main image + additional images)
   const allImages = [product.image, ...(product.images || [])].filter(Boolean);
 
-  // Auto-scroll functionality for multiple images
+  // Sync Carousel with state
   useEffect(() => {
-    if (allImages.length <= 1 || !isAutoScrollEnabled || isPaused) {
+    if (!api) {
       return;
     }
 
-    const interval = setInterval(() => {
-      setSelectedImageIndex((prevIndex) => (prevIndex + 1) % allImages.length);
-    }, 3000); // Change image every 3 seconds
+    api.on("select", () => {
+      setSelectedImageIndex(api.selectedScrollSnap());
+    });
+  }, [api]);
 
-    return () => clearInterval(interval);
-  }, [allImages.length, isAutoScrollEnabled, isPaused]);
-
-  // Handle mouse events for pause/resume
   const handleMouseEnter = () => {
-    setIsPaused(true);
+    // Handled by Autoplay plugin options
   };
 
   const handleMouseLeave = () => {
-    setIsPaused(false);
+    // Handled by Autoplay plugin options
   };
 
   const getCategoryIcon = () => {
@@ -230,7 +235,7 @@ const ProductDetailTemplate: React.FC<ProductDetailTemplateProps> = ({
               {getCategoryLabel()}
             </Badge>
           </div>
-          
+
           <h1 className="text-3xl md:text-4xl font-bold mb-2">
             {isRTL ? product.title : product.titleEn}
           </h1>
@@ -240,85 +245,80 @@ const ProductDetailTemplate: React.FC<ProductDetailTemplateProps> = ({
 
           {/* Product Image Gallery */}
           <div className="flex justify-center mb-8">
-            <div className="max-w-lg w-full">
-              {/* Main Image */}
-              <div
-                className="relative group mb-4"
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
+            <div className="max-w-lg w-full relative">
+              {/* Main Image Carousel */}
+              {/* Carousel Component Commented Out for Debugging
+              <Carousel
+                opts={{
+                  align: "start",
+                  loop: true,
+                }}
+                plugins={[
+                  Autoplay({
+                    delay: 3000,
+                    stopOnInteraction: true,
+                    stopOnMouseEnter: true,
+                  }),
+                ]}
+                setApi={setApi}
+                className="w-full relative group mb-4"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl blur-lg opacity-75 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="relative bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-purple-400/30">
-                  <img
-                    src={allImages[selectedImageIndex]}
-                    alt={isRTL ? product.title : product.titleEn}
-                    className="w-full h-80 md:h-96 object-cover rounded-xl shadow-2xl"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = '/placeholder-product.jpg';
-                    }}
-                  />
-
-                  {/* Auto-scroll indicator */}
-                  {allImages.length > 1 && isAutoScrollEnabled && (
-                    <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-sm rounded-full px-3 py-1 flex items-center gap-2">
-                      <div className="flex gap-1">
-                        {allImages.map((_, index) => (
-                          <div
-                            key={index}
-                            className={`w-2 h-2 rounded-full transition-colors duration-300 ${
-                              index === selectedImageIndex ? 'bg-purple-400' : 'bg-white/50'
-                            }`}
+                <CarouselContent>
+                  {allImages.map((image, index) => (
+                    <CarouselItem key={index}>
+                      <div className="p-1">
+                        <div className="relative aspect-square overflow-hidden rounded-xl border border-purple-400/30 bg-white/10 backdrop-blur-sm">
+                          <img
+                            src={image}
+                            alt={`${isRTL ? product.title : product.titleEn} ${index + 1}`}
+                            className="h-full w-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = '/placeholder-product.jpg';
+                            }}
                           />
-                        ))}
+                          {! Ignore overlay for now !}
+                        </div>
                       </div>
-                      <span className="text-xs text-white">
-                        {selectedImageIndex + 1}/{allImages.length}
-                      </span>
-                    </div>
-                  )}
-                  {/* Image Overlay with Product Info */}
-                  <div className="absolute top-6 right-6 flex flex-col gap-2">
-                    {product.isNew && (
-                      <Badge className="bg-green-500 text-white font-bold">
-                        {isRTL ? 'جديد' : 'New'}
-                      </Badge>
-                    )}
-                    {product.isLimited && (
-                      <Badge className="bg-orange-500 text-white font-bold">
-                        {isRTL ? 'محدود' : 'Limited'}
-                      </Badge>
-                    )}
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                {allImages.length > 1 && (
+                  <>
+                    <CarouselPrevious className="left-4 bg-black/50 hover:bg-black/70 border-none text-white h-10 w-10" />
+                    <CarouselNext className="right-4 bg-black/50 hover:bg-black/70 border-none text-white h-10 w-10" />
+                  </>
+                )}
+              </Carousel>
+              */}
+              <div className="text-white text-center p-10 bg-red-900">Carousel Debug Placeholder</div>
+
+              {/* Rating Display (Overlay relative to container) */}
+              {product.rating && (
+                <div className="absolute bottom-28 left-6 bg-black/50 backdrop-blur-sm rounded-lg px-3 py-2 flex items-center gap-2 z-10 pointer-events-none">
+                  <div className="flex items-center gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <div
+                        key={i}
+                        className={`w-4 h-4 ${i < Math.floor(product.rating || 0)
+                          ? 'text-yellow-400'
+                          : 'text-gray-400'
+                          }`}
+                      >
+                        ⭐
+                      </div>
+                    ))}
                   </div>
-                  {/* Rating Display */}
-                  {product.rating && (
-                    <div className="absolute bottom-6 left-6 bg-black/50 backdrop-blur-sm rounded-lg px-3 py-2 flex items-center gap-2">
-                      <div className="flex items-center gap-1">
-                        {[...Array(5)].map((_, i) => (
-                          <div
-                            key={i}
-                            className={`w-4 h-4 ${
-                              i < Math.floor(product.rating || 0)
-                                ? 'text-yellow-400'
-                                : 'text-gray-400'
-                            }`}
-                          >
-                            ⭐
-                          </div>
-                        ))}
-                      </div>
-                      <span className="text-white text-sm font-medium">
-                        {product.rating}
-                      </span>
-                      {product.reviewCount && (
-                        <span className="text-gray-300 text-xs">
-                          ({product.reviewCount})
-                        </span>
-                      )}
-                    </div>
+                  <span className="text-white text-sm font-medium">
+                    {product.rating}
+                  </span>
+                  {product.reviewCount && (
+                    <span className="text-gray-300 text-xs">
+                      ({product.reviewCount})
+                    </span>
                   )}
                 </div>
-              </div>
+              )}
 
               {/* Thumbnail Gallery */}
               {allImages.length > 1 && (
@@ -326,12 +326,14 @@ const ProductDetailTemplate: React.FC<ProductDetailTemplateProps> = ({
                   {allImages.map((image, index) => (
                     <button
                       key={index}
-                      onClick={() => setSelectedImageIndex(index)}
-                      className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
-                        selectedImageIndex === index
-                          ? 'border-purple-400 ring-2 ring-purple-400/50'
-                          : 'border-purple-400/30 hover:border-purple-400/60'
-                      }`}
+                      onClick={() => {
+                        api?.scrollTo(index);
+                        setSelectedImageIndex(index);
+                      }}
+                      className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all duration-200 ${selectedImageIndex === index
+                        ? 'border-purple-400 ring-2 ring-purple-400/50'
+                        : 'border-purple-400/30 hover:border-purple-400/60'
+                        } `}
                     >
                       <img
                         src={image}
